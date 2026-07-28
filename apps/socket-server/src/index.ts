@@ -1,5 +1,9 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@patient-forms/shared";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN ?? "http://localhost:3000")
@@ -17,11 +21,12 @@ const httpServer = createServer((req, res) => {
   res.end();
 });
 
-export const io = new Server(httpServer, {
-  cors: { origin: ALLOWED_ORIGINS, methods: ["GET", "POST"] },
-});
+export const io = new Server<ClientToServerEvents, ServerToClientEvents>(
+  httpServer,
+  { cors: { origin: ALLOWED_ORIGINS, methods: ["GET", "POST"] } },
+);
 
-// Event handlers are wired up once the event contract is signed off.
+// Event handlers and the session store are wired up next.
 
 httpServer.listen(PORT, () => {
   console.log(`socket-server listening on :${PORT}`);
