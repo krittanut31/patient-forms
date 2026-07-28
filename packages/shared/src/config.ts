@@ -12,8 +12,14 @@ export const TYPING_WINDOW_MS = 4_000;
 /** Silent for longer than this while still connected means `idle`. */
 export const IDLE_AFTER_MS = 30_000;
 
-/** How often the server re-evaluates every session's derived status. */
-export const STATUS_TICK_MS = 1_000;
+/**
+ * How often the server re-evaluates every session's derived status.
+ *
+ * Deliberately shorter than LOBBY_THROTTLE_MS: the same tick releases throttled
+ * lobby updates, so a slower tick would stretch the effective throttle well
+ * past 1.5s.
+ */
+export const STATUS_TICK_MS = 500;
 
 /** Lobby summaries are throttled to this interval per session. */
 export const LOBBY_THROTTLE_MS = 1_500;
