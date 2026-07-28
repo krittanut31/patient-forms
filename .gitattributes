@@ -1,0 +1,16 @@
+# LF in the repository regardless of the platform a contributor is on.
+# Without this, committing from Windows churns whole files in every diff.
+* text=auto eol=lf
+
+# Binary assets git must not try to normalise.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+
+# Generated - collapsed in reviews so it does not drown real changes.
+package-lock.json linguist-generated=true
