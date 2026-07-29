@@ -8,18 +8,16 @@ one of them to watch it fill in field by field. The point is not surveillance �
 it is so a nurse can see that the patient in chair 3 has been stuck on the
 address field for four minutes, and go help.
 
-## Status
+## Screens
 
-| Part | State |
+| Route | What it is |
 | --- | --- |
-| Socket server, session store, derived status | Done |
-| Shared event contract | Done |
-| Patient form | Done |
-| Staff list | Not started |
-| Staff detail | Not started |
-| `docs/development-plan.md` | Not started |
+| `/patient` | The intake form a patient fills in |
+| `/staff` | Live list of every active session |
+| `/staff/[sessionId]` | One session, field by field, updating live |
 
-`/staff` is linked from the home page but does not exist yet — it returns 404.
+`docs/development-plan.md` covers the project structure, the design decisions per
+breakpoint, the component architecture, and the real-time synchronisation flow.
 
 ## Requirements
 
@@ -64,6 +62,7 @@ npm run dev
 | --- | --- |
 | Next.js app | http://localhost:3000 |
 | Patient form | http://localhost:3000/patient |
+| Staff view | http://localhost:3000/staff |
 | Socket server | http://localhost:4000 |
 | Socket server health check | http://localhost:4000/health |
 
@@ -174,11 +173,51 @@ The Next.js app goes on Vercel. **The socket server cannot** — a serverless
 function cannot hold a WebSocket open — so it needs a long-running host such as
 Railway or Render.
 
-1. Deploy `apps/socket-server` to Railway or Render. It has no build step; the
-   start command is `npm start` from that directory.
-2. Set `CORS_ORIGIN` on that service to your Vercel domain.
-3. Deploy `apps/web` to Vercel with the repository root as the project root.
-4. Set `NEXT_PUBLIC_SOCKET_URL` on Vercel to the socket server's public URL.
+Deploy the socket server first. `NEXT_PUBLIC_SOCKET_URL` is inlined into the
+browser bundle at build time, so the web app needs that URL before its first
+build rather than after it.
+
+### 1. Socket server — Railway or Render
+
+Install at the **repository root**, not inside `apps/socket-server`. The server
+depends on `@patient-forms/shared` through npm workspaces; an install run inside
+the app directory will go looking for that name on the public registry and fail.
+
+| Setting | Value |
+| --- | --- |
+| Root directory | repository root |
+| Build command | `npm install` |
+| Start command | `npm start --workspace @patient-forms/socket-server` |
+| Health check path | `/health` |
+
+There is no build step — `tsx` is a runtime dependency, not a dev one, so it
+survives a production install.
+
+Leave `PORT` alone; the host sets it and the server reads it. Set `CORS_ORIGIN`
+once the Vercel domain exists (step 3).
+
+Note that a free Render instance sleeps after 15 minutes without traffic, which
+drops every open socket and costs about a minute to wake.
+
+### 2. Web app — Vercel
+
+| Setting | Value |
+| --- | --- |
+| Root directory | `apps/web` |
+| Framework preset | Next.js (detected) |
+| Environment | `NEXT_PUBLIC_SOCKET_URL` = the socket server's public URL |
+
+Vercel finds the workspace root from the lockfile and installs from there, so
+pointing it at `apps/web` is enough.
+
+### 3. Close the loop on CORS
+
+Set `CORS_ORIGIN` on the socket server to the Vercel domain and restart it. The
+web app does not need rebuilding for this.
+
+Every Vercel preview deployment gets its own hostname, and those are not covered
+by the production origin. Either add them to `CORS_ORIGIN` — it takes a
+comma-separated list — or share the production URL only.
 
 Deployed URLs: _not deployed yet._
 
