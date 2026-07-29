@@ -28,9 +28,13 @@ export function startStatusLoop(
       const status = deriveStatus(record, now);
       if (status === record.status) continue;
 
-      record.status = status;
-      await store.save(record);
-      lobby.markChanged(record.sessionId);
+      // Through `update` rather than a save: a patch landing mid-tick would
+      // otherwise be wiped out by this write of a record read moments earlier.
+      const changed = await store.update(record.sessionId, (draft) => {
+        draft.status = deriveStatus(draft, now);
+        if (draft.status === record.status) return false;
+      });
+      if (changed) lobby.markChanged(record.sessionId);
     }
 
     await lobby.flush(now);

@@ -29,7 +29,23 @@ export type SessionRecord = {
 export interface SessionStore {
   get(sessionId: string): Promise<SessionRecord | undefined>;
   list(): Promise<SessionRecord[]>;
+  /** Creates or replaces outright. Only used when a session first appears. */
   save(record: SessionRecord): Promise<void>;
+  /**
+   * Read-modify-write as one indivisible step.
+   *
+   * Doing this as `get`, mutate, `save` loses updates: two patches arriving in
+   * the same tick both read the state from before either of them, and whichever
+   * saves last wipes out the other. A patient typing quickly really does hit
+   * this — it is not a theoretical race.
+   *
+   * `mutate` must be synchronous. Returning `false` abandons the write. A Redis
+   * implementation would put this behind WATCH/MULTI or a Lua script.
+   */
+  update(
+    sessionId: string,
+    mutate: (record: SessionRecord) => boolean | void,
+  ): Promise<SessionRecord | undefined>;
   delete(sessionId: string): Promise<void>;
 }
 
@@ -53,6 +69,20 @@ export class InMemorySessionStore implements SessionStore {
 
   async save(record: SessionRecord): Promise<void> {
     this.#records.set(record.sessionId, structuredClone(record));
+  }
+
+  async update(
+    sessionId: string,
+    mutate: (record: SessionRecord) => boolean | void,
+  ): Promise<SessionRecord | undefined> {
+    const current = this.#records.get(sessionId);
+    if (!current) return undefined;
+
+    // No await between the read and the write, so nothing can interleave.
+    const draft = structuredClone(current);
+    if (mutate(draft) === false) return undefined;
+    this.#records.set(sessionId, draft);
+    return structuredClone(draft);
   }
 
   async delete(sessionId: string): Promise<void> {

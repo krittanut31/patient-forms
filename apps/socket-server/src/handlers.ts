@@ -3,7 +3,7 @@ import { FIELD_ORDER, LOBBY_ROOM, sessionRoom } from "@patient-forms/shared";
 import type { FieldPatch, PatientFormField } from "@patient-forms/shared";
 import { createSession, toSnapshot, toSummary } from "./domain";
 import type { LobbyBroadcaster } from "./lobby";
-import type { SessionRecord, SessionStore } from "./store";
+import type { SessionStore } from "./store";
 import type { AppServer, AppSocket } from "./types";
 
 const isKnownField = (field: unknown): field is PatientFormField =>
@@ -15,39 +15,27 @@ export function registerHandlers(
   lobby: LobbyBroadcaster,
 ): void {
   io.on("connection", (socket: AppSocket) => {
-    /**
-     * Loads the session this socket owns, or nothing if it has not identified
-     * itself or the session has already been submitted. Submitted sessions stop
-     * accepting input so a late debounced patch cannot reopen a finished form.
-     */
-    const activeSession = async (): Promise<SessionRecord | undefined> => {
-      const sessionId = socket.data.sessionId;
-      if (!sessionId) return undefined;
-      const record = await store.get(sessionId);
-      if (!record || record.submittedAt !== null) return undefined;
-      return record;
-    };
-
     // ---- patient -----------------------------------------------------------
 
     socket.on("session:init", async ({ sessionId }, ack) => {
-      const now = Date.now();
-      const existing = sessionId ? await store.get(sessionId) : undefined;
-
-      if (existing) {
+      if (sessionId) {
         // A refresh or a reconnect. Same row in the staff list, not a new one.
-        existing.connected = true;
-        existing.socketId = socket.id;
-        await store.save(existing);
-        socket.data.sessionId = existing.sessionId;
-        lobby.markChanged(existing.sessionId);
-        ack({ sessionId: existing.sessionId, fields: existing.fields });
-        return;
+        const rejoined = await store.update(sessionId, (record) => {
+          record.connected = true;
+          record.socketId = socket.id;
+        });
+
+        if (rejoined) {
+          socket.data.sessionId = rejoined.sessionId;
+          lobby.markChanged(rejoined.sessionId);
+          ack({ sessionId: rejoined.sessionId, fields: rejoined.fields });
+          return;
+        }
       }
 
       // Any id offered for a session we do not have is discarded rather than
       // trusted — the server names sessions, clients only echo the name back.
-      const record = createSession(randomUUID(), socket.id, now);
+      const record = createSession(randomUUID(), socket.id, Date.now());
       await store.save(record);
       socket.data.sessionId = record.sessionId;
       lobby.markChanged(record.sessionId);
@@ -55,61 +43,64 @@ export function registerHandlers(
     });
 
     socket.on("session:patch", async ({ field, value, isValid }) => {
+      const sessionId = socket.data.sessionId;
+      if (!sessionId) return;
       if (!isKnownField(field) || typeof value !== "string") return;
-      const record = await activeSession();
-      if (!record) return;
 
       const now = Date.now();
-      record.fields[field] = { value, isValid, updatedAt: now };
-      record.lastActiveAt = now;
-      await store.save(record);
+      const updated = await store.update(sessionId, (record) => {
+        // A late debounced patch must not reopen a finished form.
+        if (record.submittedAt !== null) return false;
+        record.fields[field] = { value, isValid, updatedAt: now };
+        record.lastActiveAt = now;
+      });
+      if (!updated) return;
 
-      const patch: FieldPatch = {
-        sessionId: record.sessionId,
-        field,
-        value,
-        isValid,
-        at: now,
-      };
-      io.to(sessionRoom(record.sessionId)).emit("session:patch", patch);
-      lobby.markChanged(record.sessionId);
+      const patch: FieldPatch = { sessionId, field, value, isValid, at: now };
+      io.to(sessionRoom(sessionId)).emit("session:patch", patch);
+      lobby.markChanged(sessionId);
     });
 
     socket.on("session:focus", async ({ field }) => {
+      const sessionId = socket.data.sessionId;
+      if (!sessionId) return;
       if (field !== null && !isKnownField(field)) return;
-      const record = await activeSession();
-      if (!record) return;
 
-      const now = Date.now();
-      record.focusedField = field;
-      // Deliberately does not touch lastActiveAt. Someone sitting on the address
-      // field for four minutes is exactly who staff need surfaced as idle, and
-      // counting focus as activity would hide them.
-      await store.save(record);
+      const updated = await store.update(sessionId, (record) => {
+        if (record.submittedAt !== null) return false;
+        // Deliberately does not touch lastActiveAt. Someone sitting on the
+        // address field for four minutes is exactly who staff need surfaced as
+        // idle, and counting focus as activity would hide them.
+        record.focusedField = field;
+      });
+      if (!updated) return;
 
-      io.to(sessionRoom(record.sessionId)).emit("session:focus", {
-        sessionId: record.sessionId,
+      io.to(sessionRoom(sessionId)).emit("session:focus", {
+        sessionId,
         field,
-        at: now,
+        at: Date.now(),
       });
     });
 
     socket.on("session:submit", async () => {
-      const record = await activeSession();
-      if (!record) return;
+      const sessionId = socket.data.sessionId;
+      if (!sessionId) return;
 
       const now = Date.now();
-      record.submittedAt = now;
-      record.lastActiveAt = now;
-      record.focusedField = null;
-      await store.save(record);
+      const updated = await store.update(sessionId, (record) => {
+        if (record.submittedAt !== null) return false;
+        record.submittedAt = now;
+        record.lastActiveAt = now;
+        record.focusedField = null;
+      });
+      if (!updated) return;
 
-      io.to(sessionRoom(record.sessionId)).emit("session:focus", {
-        sessionId: record.sessionId,
+      io.to(sessionRoom(sessionId)).emit("session:focus", {
+        sessionId,
         field: null,
         at: now,
       });
-      lobby.markChanged(record.sessionId);
+      lobby.markChanged(sessionId);
     });
 
     // ---- staff -------------------------------------------------------------
@@ -142,16 +133,16 @@ export function registerHandlers(
     socket.on("disconnect", async () => {
       const sessionId = socket.data.sessionId;
       if (!sessionId) return;
-      const record = await store.get(sessionId);
-      // A reconnect can land before the old socket's disconnect fires. Only the
-      // socket still registered as the owner is allowed to mark it offline.
-      if (!record || record.socketId !== socket.id) return;
 
-      record.connected = false;
-      record.socketId = null;
-      record.focusedField = null;
-      await store.save(record);
-      lobby.markChanged(sessionId);
+      const updated = await store.update(sessionId, (record) => {
+        // A reconnect can land before the old socket's disconnect fires. Only
+        // the socket still registered as the owner may mark it offline.
+        if (record.socketId !== socket.id) return false;
+        record.connected = false;
+        record.socketId = null;
+        record.focusedField = null;
+      });
+      if (updated) lobby.markChanged(sessionId);
     });
   });
 }
