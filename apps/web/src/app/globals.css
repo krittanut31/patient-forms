@@ -153,6 +153,14 @@
     width: 100%;
   }
 
+  /* `levelsGroup` is `display: flex`, and the level wrapper inside it carries
+     no class of its own — so it sizes to its content and the tables below
+     resolve their 100% against that rather than against the dropdown. This is
+     the same declaration Mantine's own full-width rule uses. */
+  .mantine-DateInput-levelsGroup > * {
+    flex: 1;
+  }
+
   .mantine-DateInput-levelsGroup,
   .mantine-DateInput-month,
   .mantine-DateInput-monthsList,
