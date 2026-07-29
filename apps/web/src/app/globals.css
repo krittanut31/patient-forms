@@ -1,26 +1,155 @@
 @import "tailwindcss";
 
+/*
+ * Runtime palette. Declared as plain custom properties rather than inside
+ * @theme so the media query below can swap them; @theme inline then exposes
+ * them to Tailwind, which keeps the generated utilities pointing at the var.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --canvas: #eef2f4;
+  --surface: #ffffff;
+  --surface-sub: #f6f9fa;
+  --ink: #0c1a20;
+  --ink-muted: #536a74;
+  --line: #cbd8de;
+  --line-soft: #e1eaee;
+  --accent: #0b6e7f;
+  --accent-ink: #ffffff;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --status-new: #5c7480;
+  --status-typing: #0f7a5f;
+  --status-idle: #c2410c;
+  --status-submitted: #3e5c8a;
+  --status-disconnected: #7a6a62;
+  --status-idle-wash: #fdf0e7;
+
+  --danger: #b42318;
+  --danger-wash: #fdf0ef;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --canvas: #0d1518;
+    --surface: #141f24;
+    --surface-sub: #101a1e;
+    --ink: #e3edf1;
+    --ink-muted: #8aa2ac;
+    --line: #24343b;
+    --line-soft: #1b282e;
+    --accent: #3fa9bd;
+    --accent-ink: #06181d;
+
+    --status-new: #8399a4;
+    --status-typing: #35a883;
+    --status-idle: #e9843f;
+    --status-submitted: #7096cc;
+    --status-disconnected: #a08f85;
+    --status-idle-wash: #2a1d14;
+
+    --danger: #f28b82;
+    --danger-wash: #2a1616;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sub: var(--surface-sub);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-status-new: var(--status-new);
+  --color-status-typing: var(--status-typing);
+  --color-status-idle: var(--status-idle);
+  --color-status-submitted: var(--status-submitted);
+  --color-status-disconnected: var(--status-disconnected);
+  --color-status-idle-wash: var(--status-idle-wash);
+
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+
+  /* No web font: a ward tablet should not wait on a download, and the system
+     stack already renders Thai and Latin names on a shared baseline. */
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Leelawadee UI",
+    sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+
+  --radius-chip: 2px;
+  --radius-field: 4px;
+  --radius-panel: 6px;
+}
+
+@layer base {
+  html {
+    background-color: var(--canvas);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Focus is never removed, only restyled. Staff and patients both navigate
+     this by keyboard when the touchscreen is awkward. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Anywhere digits sit in a column or tick on a timer. */
+  th,
+  td,
+  time,
+  output,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* A changed field flashes so the eye catches which one moved. */
+@keyframes field-flash {
+  from {
+    background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.field-flash {
+  animation: field-flash 600ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The flash carries information, so it survives as a static tint rather than
+     being removed along with the movement. */
+  .field-flash {
+    animation: none !important;
+    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
 }
