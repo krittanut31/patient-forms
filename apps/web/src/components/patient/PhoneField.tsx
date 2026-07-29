@@ -7,9 +7,10 @@ import type {
   ComboboxParsedItem,
   OptionsFilter,
 } from "@mantine/core";
+import { useLocale, useTranslations } from "next-intl";
+import { regionName } from "@/lib/countries";
 import type { FieldConfig } from "@/lib/field-config";
 import {
-  countryOf,
   DEFAULT_DIAL_CODE,
   DEFAULT_ISO,
   DIAL_CODES,
@@ -23,6 +24,10 @@ import { Field } from "./Field";
 
 type Props = {
   config: FieldConfig;
+  label: React.ReactNode;
+  /** Plain text version of the label, for the select's own aria-label. */
+  labelText: string;
+  hint?: string;
   /** The stored value, `+66812345678`. */
   value: string;
   error?: string;
@@ -38,43 +43,14 @@ const SELECT_DATA: ComboboxItem[] = DIAL_CODES.map((entry) => ({
   label: entry.code,
 }));
 
-/** Lower-cased once at module load, not on every keystroke of a search. */
-const SEARCH_INDEX = new Map(
-  DIAL_CODES.map((entry) => [
-    entry.iso,
-    `${entry.country} ${entry.code} ${entry.iso}`.toLowerCase(),
-  ]),
-);
-
-/**
- * Search matches the country, not the label.
- *
- * The option label is the dial code alone, because that is all that fits in the
- * trigger beside the number — but nobody knows Laos by `+856`. Without this,
- * typing "Laos" into a list of 242 codes finds nothing.
- */
 const isOption = (item: ComboboxParsedItem): item is ComboboxItem =>
   "value" in item;
 
-const filterByCountry: OptionsFilter = ({ options, search }) => {
-  const query = search.trim().toLowerCase();
-  if (query === "") return options;
-  return options
-    .filter(isOption)
-    .filter((option) => SEARCH_INDEX.get(option.value)?.includes(query));
-};
-
-/**
- * Dialing code and number, stored as one string.
- *
- * The selected country lives in local state as well as in the stored value
- * because the two are not the same thing: picking Singapore before typing any
- * digits has to stick on screen, but it must not write `+65` into a field the
- * patient has left empty — that would count as filled on the staff list and
- * read as progress that never happened.
- */
 export function PhoneField({
   config,
+  label,
+  labelText,
+  hint,
   value,
   error,
   describedBy,
@@ -82,10 +58,38 @@ export function PhoneField({
   onFocus,
   onBlur,
 }: Props) {
+  const locale = useLocale();
+  const t = useTranslations("patient");
   const parsed = useMemo(() => splitPhone(value), [value]);
   const [iso, setIso] = useState(
     value === "" ? DEFAULT_ISO : isoOf(parsed.dialCode),
   );
+
+  /**
+   * Search matches the country in the reader's language, not the label.
+   *
+   * The option label is the dial code alone, because that is all that fits in
+   * the trigger beside the number — but nobody knows Laos by `+856`, and a Thai
+   * patient looks for "ลาว". Rebuilt when the language changes.
+   */
+  const searchIndex = useMemo(
+    () =>
+      new Map(
+        DIAL_CODES.map((entry) => [
+          entry.iso,
+          `${regionName(entry.iso, locale)} ${entry.country} ${entry.code} ${entry.iso}`.toLowerCase(),
+        ]),
+      ),
+    [locale],
+  );
+
+  const filterByCountry: OptionsFilter = ({ options, search }) => {
+    const query = search.trim().toLowerCase();
+    if (query === "") return options;
+    return options
+      .filter(isOption)
+      .filter((option) => searchIndex.get(option.value)?.includes(query));
+  };
 
   // A restored session arrives after the first render, so follow the stored
   // code whenever there is one rather than leaving the selector on the default.
@@ -93,7 +97,7 @@ export function PhoneField({
   const activeCode = dialCodeOf(activeIso);
 
   return (
-    <Field config={config} error={error}>
+    <Field config={config} label={label} hint={hint} error={error}>
       <Group gap="xs" wrap="nowrap" align="flex-start">
         <Select
           data={SELECT_DATA}
@@ -108,8 +112,8 @@ export function PhoneField({
           allowDeselect={false}
           searchable
           filter={filterByCountry}
-          nothingFoundMessage="No country by that name"
-          aria-label={`${config.label} country code`}
+          nothingFoundMessage={t("countryNoMatch")}
+          aria-label={t("countryCodeFor", { field: labelText })}
           // Long enough for the five-character codes without truncating, narrow
           // enough to leave the number the wide control on a 360px phone.
           w={104}
@@ -118,17 +122,14 @@ export function PhoneField({
             // A dropdown row is a touch target like any other.
             option: { minHeight: "2.75rem", alignItems: "center" },
           }}
-          // No truncation. The longest name in the list runs to 44 characters —
-          // "Korea, Democratic People's Republic of Korea" — which does not fit
-          // on one line inside a dropdown narrow enough for a 360px phone, so it
-          // wraps rather than being cut. Mantine's option already sets
-          // `overflow-wrap: break-word`; the earlier clipping was a `truncate`
-          // class of mine, not the library.
+          // No truncation. The longest name runs past 40 characters, which does
+          // not fit on one line inside a dropdown narrow enough for a 360px
+          // phone, so it wraps rather than being cut.
           renderOption={({ option }) => (
             <span className="flex w-full items-baseline gap-3">
               <span className="tabular shrink-0 font-medium">{option.label}</span>
               <span className="flex-1 text-right text-xs text-ink-muted">
-                {countryOf(option.value)}
+                {regionName(option.value, locale)}
               </span>
             </span>
           )}

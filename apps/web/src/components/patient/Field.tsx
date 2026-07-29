@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import type { FieldConfig } from "@/lib/field-config";
-import { fieldLabel } from "./field-label";
 
 type FieldProps = {
   config: FieldConfig;
+  label: ReactNode;
+  hint?: string;
   error?: string;
   children: ReactNode;
 };
@@ -22,19 +23,19 @@ export const errorId = (field: string) => `${field}-error`;
  * genuinely broken label. Spacing and weight mirror the theme's InputWrapper
  * styles so the two paths line up.
  */
-export function Field({ config, error, children }: FieldProps) {
+export function Field({ config, label, hint, error, children }: FieldProps) {
   return (
     <div>
       <label
         htmlFor={config.field}
         className="mb-1.5 block text-base font-medium text-ink"
       >
-        {fieldLabel(config)}
+        {label}
       </label>
 
-      {config.hint && (
+      {hint && (
         <p id={hintId(config.field)} className="mb-1.5 text-sm text-ink-muted">
-          {config.hint}
+          {hint}
         </p>
       )}
 

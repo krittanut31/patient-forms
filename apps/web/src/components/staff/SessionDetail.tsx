@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@mantine/core";
+import { useLocale, useTranslations } from "next-intl";
+import { sessionCode } from "@patient-forms/shared";
 import type {
   FieldPatch,
   FieldState,
@@ -12,12 +14,13 @@ import type {
 } from "@patient-forms/shared";
 import { displayValue } from "@/lib/display-value";
 import { FIELD_CONFIGS, fieldConfig } from "@/lib/field-config";
+import { optionsFor } from "@/lib/field-options";
 import { fieldStateKind } from "@/lib/field-state";
 import { formatElapsed } from "@/lib/relative-time";
 import { useNow } from "@/lib/use-now";
 import { useStaff } from "./StaffSocketProvider";
 import { FieldStateMark } from "./FieldStateMark";
-import { STATUS_LABEL, StatusChip } from "./StatusChip";
+import { StatusChip } from "./StatusChip";
 
 type Fields = Partial<Record<PatientFormField, FieldState>>;
 
@@ -27,6 +30,13 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   const [fields, setFields] = useState<Fields>({});
   const [focusedField, setFocusedField] = useState<PatientFormField | null>(null);
   const now = useNow();
+
+  const locale = useLocale();
+  const t = useTranslations("staff");
+  const tDetail = useTranslations("staff.detail");
+  const tFields = useTranslations("fields");
+  const tOptions = useTranslations("options");
+  const tStatus = useTranslations("staff.status");
 
   // When this view opened. Used to suppress the change flash on arrival —
   // otherwise opening a half-filled form lights up eleven rows at once and the
@@ -87,6 +97,16 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     };
   }, [sessionId, socketRef]);
 
+  // Resolved once per language rather than per field per render: the
+  // nationality list alone is 242 entries with a collator sort behind it.
+  const optionsByField = useMemo(() => {
+    const map = new Map<PatientFormField, ReturnType<typeof optionsFor>>();
+    for (const config of FIELD_CONFIGS) {
+      map.set(config.field, optionsFor(config, locale, tOptions));
+    }
+    return map;
+  }, [locale, tOptions]);
+
   // The lobby summary is throttled to 1.5s, so trust the patch stream for the
   // clock — it is the difference between "stuck 4m" and "stuck 4m, probably".
   const lastActiveAt = Math.max(
@@ -94,16 +114,21 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     ...Object.values(fields).map((state) => state.updatedAt),
   );
 
-  const focusedLabel = focusedField ? fieldConfig(focusedField).label : null;
+  const focusedLabel = focusedField
+    ? tFields(`${fieldConfig(focusedField).field}.label`)
+    : null;
+
+  const name =
+    summary?.displayName ?? t("newPatient", { code: sessionCode(sessionId) });
 
   if (!summary && snapshot === null && connection === "online") {
     return (
       <div className="flex h-full items-center justify-center px-6 py-16">
         <div className="max-w-sm text-center">
-          <h2 className="text-base font-medium text-ink">This session has ended</h2>
-          <p className="mt-1.5 text-sm text-ink-muted">
-            It was submitted a while ago or the patient left without finishing.
-          </p>
+          <h2 className="text-base font-medium text-ink">
+            {tDetail("endedHeading")}
+          </h2>
+          <p className="mt-1.5 text-sm text-ink-muted">{tDetail("endedBody")}</p>
           <Button
             component={Link}
             href="/staff"
@@ -111,7 +136,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             size="sm"
             className="mt-4"
           >
-            Back to the list
+            {tDetail("backLong")}
           </Button>
         </div>
       </div>
@@ -129,23 +154,29 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             size="sm"
             className="-ml-2 lg:hidden"
           >
-            ← List
+            {tDetail("back")}
           </Button>
 
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-semibold text-ink">
-              {summary?.displayName ?? "Loading…"}
+              {summary ? name : tDetail("loading")}
             </h2>
             {summary && (
               <p className="tabular mt-0.5 flex flex-wrap gap-x-2.5 text-xs text-ink-muted">
                 <span>
-                  {summary.filledCount} of {summary.totalFields} fields
+                  {t("progress", {
+                    filled: summary.filledCount,
+                    total: summary.totalFields,
+                  })}
                 </span>
-                <span>last activity {formatElapsed(now - lastActiveAt)} ago</span>
+                <span>
+                  {tDetail("lastActivity", {
+                    elapsed: formatElapsed(now - lastActiveAt),
+                  })}
+                </span>
                 {summary.invalidCount > 0 && (
                   <span className="font-medium text-danger">
-                    {summary.invalidCount} need
-                    {summary.invalidCount === 1 ? "s" : ""} fixing
+                    {t("needFixing", { count: summary.invalidCount })}
                   </span>
                 )}
               </p>
@@ -163,19 +194,23 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
         <p className="mt-2 text-xs">
           {focusedLabel ? (
             <span className="text-ink">
-              Currently on{" "}
+              {tDetail("focusedOn")}{" "}
               <span className="font-semibold text-accent">{focusedLabel}</span>
             </span>
           ) : (
-            <span className="text-ink-muted">Not on any field right now</span>
+            <span className="text-ink-muted">{tDetail("notFocused")}</span>
           )}
         </p>
 
         <p aria-live="polite" className="sr-only">
           {summary
-            ? `${summary.displayName}, ${STATUS_LABEL[summary.status]}.${
-                focusedLabel ? ` On the ${focusedLabel} field.` : ""
-              }`
+            ? tDetail("announcement", {
+                name,
+                status: tStatus(summary.status),
+                focus: focusedLabel
+                  ? tDetail("announcementFocus", { field: focusedLabel })
+                  : "",
+              })
             : ""}
         </p>
       </header>
@@ -185,7 +220,14 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
           const state = fields[config.field];
           const kind = fieldStateKind(state);
           const focused = focusedField === config.field;
-          const shown = state ? displayValue(config, state.value) : "";
+          const shown = state
+            ? displayValue(
+                config,
+                state.value,
+                locale,
+                optionsByField.get(config.field) ?? [],
+              )
+            : "";
 
           return (
             <div
@@ -200,17 +242,17 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
               <FieldStateMark state={kind} />
 
               <dt className="col-start-2 text-xs text-ink-muted">
-                {config.label}
+                {tFields(`${config.field}.label`)}
                 {focused && (
                   <span className="ml-1.5 font-semibold text-accent">
-                    · here now
+                    {tDetail("hereNow")}
                   </span>
                 )}
               </dt>
 
               <dd className="col-start-2 text-base wrap-break-word text-ink sm:col-start-3">
                 {shown === "" ? (
-                  <span className="text-ink-muted">Empty</span>
+                  <span className="text-ink-muted">{tDetail("empty")}</span>
                 ) : (
                   <span
                     // Remounting on a new timestamp replays the CSS animation —

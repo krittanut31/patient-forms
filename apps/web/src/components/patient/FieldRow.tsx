@@ -5,10 +5,11 @@ import { Controller, useFormState } from "react-hook-form";
 import type { Control, UseFormRegister } from "react-hook-form";
 import { NativeSelect, Select, Textarea, TextInput } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
+import { useLocale, useTranslations } from "next-intl";
 import type { PatientFormField } from "@patient-forms/shared";
 import type { FieldConfig } from "@/lib/field-config";
+import { optionsFor } from "@/lib/field-options";
 import type { IntakeValues } from "@/lib/intake-schema";
-import { NATIONALITIES } from "@/lib/nationalities";
 import { fieldLabel } from "./field-label";
 import { PhoneField } from "./PhoneField";
 
@@ -43,6 +44,11 @@ export function FieldRow({
   const { errors } = useFormState({ control, name: config.field });
   const error = errors[config.field]?.message;
 
+  const locale = useLocale();
+  const t = useTranslations("patient");
+  const tFields = useTranslations("fields");
+  const tOptions = useTranslations("options");
+
   // Recomputed once, not on every keystroke: the calendar's bounds do not move
   // while somebody is filling in a form.
   const dateBounds = useMemo(() => {
@@ -52,10 +58,18 @@ export function FieldRow({
     return { today, floor };
   }, []);
 
-  const label = fieldLabel(config);
+  const labelText = tFields(`${config.field}.label`);
+  const hint = config.hint ? tFields(`${config.field}.hint`) : undefined;
+  const label = fieldLabel(config, labelText, t("optional"));
+
+  const options = useMemo(
+    () => optionsFor(config, locale, tOptions),
+    [config, locale, tOptions],
+  );
+
   const shared = {
     label,
-    description: config.hint,
+    description: hint,
     error,
     withAsterisk: false,
   };
@@ -68,6 +82,9 @@ export function FieldRow({
         render={({ field }) => (
           <PhoneField
             config={config}
+            label={label}
+            labelText={labelText}
+            hint={hint}
             value={field.value}
             error={error}
             onChange={(value) => {
@@ -102,17 +119,13 @@ export function FieldRow({
             // Opens on years, not on this month. A date of birth is decades
             // back, and a month grid starts that journey in the wrong place.
             defaultLevel="decade"
-            // Without this an empty field opens on `minDate` — 1900 — because
-            // that is where the clamp lands when there is no value to display.
-            // Everyone alive is nearer to this decade than to that one.
             defaultDate={field.value || dateBounds.today}
-            // Sunday first. The default is Monday, which is right for a diary
-            // and wrong for a Thai hospital calendar on the wall.
+            // Sunday first, matching a Thai wall calendar.
             firstDayOfWeek={0}
             // Never numeric-only: 03/04/1975 means two different days depending
             // on who is reading it, and this form is filled in by both.
             valueFormat="D MMM YYYY"
-            placeholder="e.g. 4 Mar 1975"
+            placeholder={t("datePlaceholder")}
             autoComplete={config.autoComplete}
             // The dropdown matches the field. What spreads the grids inside it
             // is a block of CSS in globals.css — Mantine's own `fullWidth` prop
@@ -143,11 +156,11 @@ export function FieldRow({
           <Select
             {...shared}
             id={config.field}
-            data={NATIONALITIES as string[]}
+            data={options}
             value={field.value === "" ? null : field.value}
             searchable
             allowDeselect={false}
-            nothingFoundMessage="No match — tell reception and they will add it"
+            nothingFoundMessage={t("nationalityNoMatch")}
             autoComplete={config.autoComplete}
             onChange={(value) => {
               const next = value ?? "";
@@ -208,7 +221,7 @@ export function FieldRow({
     return (
       <NativeSelect
         {...registered}
-        data={[{ value: "", label: "Choose one" }, ...(config.options ?? [])]}
+        data={[{ value: "", label: t("chooseOne") }, ...options]}
       />
     );
   }

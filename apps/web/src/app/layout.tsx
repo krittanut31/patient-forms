@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 // globals.css first, and not for tidiness: it opens with the `@layer` statement
 // that fixes the cascade order, and a layer's position is decided by where it
 // is first declared. Import Mantine's stylesheets above this line and `mantine`
@@ -10,11 +12,10 @@ import "@mantine/core/styles.layer.css";
 import "@mantine/dates/styles.layer.css";
 import { AppProviders } from "@/components/AppProviders";
 
-export const metadata: Metadata = {
-  title: "Outpatient intake",
-  description:
-    "Patient registration for the outpatient department, with a live view for reception staff.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("app");
+  return { title: t("title"), description: t("description") };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -25,19 +26,23 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+
   return (
     // `dvh` rather than `vh`: on a phone the address bar makes `100vh` taller
     // than what is actually on screen, which pushes the bottom of the staff
     // list under the browser chrome where nobody can reach it.
-    <html lang="en" className="h-dvh" {...mantineHtmlProps}>
+    <html lang={locale} className="h-dvh" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript forceColorScheme="light" />
       </head>
       <body className="flex min-h-full flex-col bg-canvas text-ink">
-        <AppProviders>{children}</AppProviders>
+        <NextIntlClientProvider>
+          <AppProviders>{children}</AppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

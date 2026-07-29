@@ -1,13 +1,10 @@
+import { sessionCode } from "@patient-forms/shared";
 import type { SessionStatus, SessionSummary } from "@patient-forms/shared";
 
 export type SortKey = "needs-help" | "name" | "progress" | "recent";
 
-export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "needs-help", label: "Who needs help" },
-  { value: "recent", label: "Most recent activity" },
-  { value: "progress", label: "Least progress" },
-  { value: "name", label: "Name" },
-];
+/** Order of the dropdown. The labels are looked up per locale at render. */
+export const SORT_KEYS: SortKey[] = ["needs-help", "recent", "progress", "name"];
 
 /**
  * Default order, from the brief: longest idle first, then new, then typing.
@@ -17,6 +14,10 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
  * tablet or a patient who wandered off — and staff should see it before the
  * people who are getting on with it fine.
  */
+/** An unnamed session sorts under `~` + its code, which lands after any name. */
+const nameKey = (session: SessionSummary): string =>
+  session.displayName ?? `~${sessionCode(session.sessionId)}`;
+
 const URGENCY: Record<SessionStatus, number> = {
   idle: 0,
   disconnected: 1,
@@ -33,8 +34,11 @@ export function sortSessions(
 
   switch (key) {
     case "name":
+      // Nobody has a name until two fields arrive, so the unnamed sort by their
+      // code — stable, and it keeps them together at one end of the list rather
+      // than scattered through it.
       return sorted.sort((a, b) =>
-        a.displayName.localeCompare(b.displayName, undefined, {
+        nameKey(a).localeCompare(nameKey(b), undefined, {
           sensitivity: "base",
         }),
       );

@@ -14,88 +14,107 @@ const MAX_AGE_YEARS = 120;
  * which is the rule as specified.
  */
 const NAME_CHARSET = /^[\p{L}\p{M}' ]+$/u;
-const nameMessage = (label: string) =>
-  `${label} cannot contain numbers or symbols`;
-
-const required = (label: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `${label} is required`);
-
-const optional = z.string().trim();
-
-const nameField = (label: string, isRequired: boolean) => {
-  const base = isRequired ? required(label) : optional;
-  return base.refine(
-    (value) => value === "" || NAME_CHARSET.test(value),
-    nameMessage(label),
-  );
-};
 
 /**
- * One schema per field rather than only a whole-form schema.
+ * How a schema gets its messages.
  *
- * Patches carry an `isValid` flag for every keystroke, including keystrokes on
- * fields the patient has not finished or blurred yet, so validity has to be
- * answerable for a single field in isolation — react-hook-form's error state
- * is not, since it only populates once a field has been touched.
+ * The rules are the same in every language; only the wording changes. Passing
+ * the words in rather than baking them in is what lets the same file answer
+ * "is this value valid" without a translator present — see `isFieldValid`.
  */
-export const fieldSchemas = {
-  firstName: nameField("First name", true),
-  middleName: nameField("Middle name", false),
-  lastName: nameField("Last name", true),
+export type ValidationCopy = {
+  t: (key: string, values?: Record<string, string | number>) => string;
+  label: (field: PatientFormField) => string;
+};
 
-  dateOfBirth: required("Date of birth").pipe(
+export function createFieldSchemas(
+  copy: ValidationCopy,
+  // Both parameters matter: `ZodType<string>` alone leaves the *input* type as
+  // `unknown`, and zodResolver then infers a form whose every field is unknown.
+): Record<PatientFormField, z.ZodType<string, string>> {
+  const required = (field: PatientFormField) =>
     z
       .string()
-      .refine((value) => !Number.isNaN(Date.parse(value)), "Use a real date")
-      .refine((value) => new Date(value) <= new Date(), "Date of birth cannot be in the future")
-      .refine((value) => {
-        const floor = new Date();
-        floor.setFullYear(floor.getFullYear() - MAX_AGE_YEARS);
-        return new Date(value) >= floor;
-      }, `Check the year — that is over ${MAX_AGE_YEARS} years ago`),
-  ),
+      .trim()
+      .min(1, copy.t("required", { field: copy.label(field) }));
 
-  gender: required("Gender"),
+  const optional = z.string().trim();
 
-  // The dialing code is part of the stored value, so validity depends on both
-  // halves at once — see lib/phone.ts.
-  phone: required("Phone number").pipe(
-    z.string().refine(isStoredPhoneValid, "Check the phone number for that country"),
-  ),
+  const nameField = (field: PatientFormField, isRequired: boolean) => {
+    const base = isRequired ? required(field) : optional;
+    return base.refine(
+      (value) => value === "" || NAME_CHARSET.test(value),
+      copy.t("nameCharset", { field: copy.label(field) }),
+    );
+  };
 
-  email: optional.refine(
-    (value) => value === "" || z.email().safeParse(value).success,
-    "Please enter valid email",
-  ),
+  return {
+    firstName: nameField("firstName", true),
+    middleName: nameField("middleName", false),
+    lastName: nameField("lastName", true),
 
-  address: required("Address"),
-  preferredLanguage: required("Preferred language"),
-  nationality: required("Nationality"),
+    dateOfBirth: required("dateOfBirth").pipe(
+      z
+        .string()
+        .refine((value) => !Number.isNaN(Date.parse(value)), copy.t("realDate"))
+        .refine(
+          (value) => new Date(value) <= new Date(),
+          copy.t("futureDate"),
+        )
+        .refine((value) => {
+          const floor = new Date();
+          floor.setFullYear(floor.getFullYear() - MAX_AGE_YEARS);
+          return new Date(value) >= floor;
+        }, copy.t("tooLongAgo", { years: MAX_AGE_YEARS })),
+    ),
 
-  emergencyContactName: optional,
-  emergencyContactNumber: optional.refine(
-    (value) => value === "" || isStoredPhoneValid(value),
-    "Check the phone number for that country",
-  ),
-  emergencyContactRelationship: optional,
-  religion: optional,
-} satisfies Record<PatientFormField, z.ZodType<string>>;
+    gender: required("gender"),
 
-export const intakeSchema = z.object(fieldSchemas);
+    // The dialing code is part of the stored value, so validity depends on both
+    // halves at once — see lib/phone.ts.
+    phone: required("phone").pipe(
+      z.string().refine(isStoredPhoneValid, copy.t("phone")),
+    ),
 
-export type IntakeValues = z.infer<typeof intakeSchema>;
+    email: optional.refine(
+      (value) => value === "" || z.email().safeParse(value).success,
+      copy.t("email"),
+    ),
+
+    address: required("address"),
+    preferredLanguage: required("preferredLanguage"),
+    nationality: required("nationality"),
+
+    emergencyContactName: optional,
+    emergencyContactNumber: optional.refine(
+      (value) => value === "" || isStoredPhoneValid(value),
+      copy.t("phone"),
+    ),
+    emergencyContactRelationship: optional,
+    religion: optional,
+  };
+}
+
+export const createIntakeSchema = (copy: ValidationCopy) =>
+  z.object(createFieldSchemas(copy));
+
+export type IntakeValues = Record<PatientFormField, string>;
+
+/**
+ * The same rules with the messages left blank.
+ *
+ * Every patch carries an `isValid` flag, including for fields nobody has
+ * blurred yet, and that flag is computed outside React — where there is no
+ * translator to hand and no need for one, because a boolean does not have a
+ * language.
+ */
+const SILENT: ValidationCopy = { t: () => "", label: () => "" };
+const validityRules = createFieldSchemas(SILENT);
+
+export function isFieldValid(field: PatientFormField, value: string): boolean {
+  return validityRules[field].safeParse(value).success;
+}
 
 export const emptyIntake: PatientForm = Object.fromEntries(
   FIELD_ORDER.map((field) => [field, ""]),
 ) as PatientForm;
-
-/**
- * Validity of one field on its own. Used for the `isValid` flag on every patch,
- * so staff see a malformed phone number the moment it is typed.
- */
-export function isFieldValid(field: PatientFormField, value: string): boolean {
-  return fieldSchemas[field].safeParse(value).success;
-}

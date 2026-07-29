@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Stack } from "@mantine/core";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import type { PatientForm, PatientFormField } from "@patient-forms/shared";
+import { DEFAULT_NATIONALITY } from "@/lib/countries";
 import { FIELD_CONFIGS } from "@/lib/field-config";
-import { emptyIntake, intakeSchema } from "@/lib/intake-schema";
+import { createIntakeSchema, emptyIntake } from "@/lib/intake-schema";
 import type { IntakeValues } from "@/lib/intake-schema";
-import { DEFAULT_NATIONALITY } from "@/lib/nationalities";
 import { usePatientSession } from "@/lib/use-patient-session";
 import { ConnectionNotice } from "./ConnectionNotice";
 import { FieldRow } from "./FieldRow";
@@ -23,8 +24,23 @@ export function IntakeForm() {
   const [submitted, setSubmitted] = useState(false);
   const restoredRef = useRef(false);
 
+  const t = useTranslations("patient");
+  const tFields = useTranslations("fields");
+  const tValidation = useTranslations("validation");
+
+  // Rebuilt when the language changes, so a message already on screen switches
+  // with everything else rather than sitting there in the old language.
+  const schema = useMemo(
+    () =>
+      createIntakeSchema({
+        t: (key, values) => tValidation(key, values),
+        label: (field) => tFields(`${field}.label`),
+      }),
+    [tValidation, tFields],
+  );
+
   const form = useForm<IntakeValues>({
-    resolver: zodResolver(intakeSchema),
+    resolver: zodResolver(schema),
     // Nothing is flagged until the patient leaves the field; after that it
     // re-checks as they type, so a correction clears the message immediately.
     mode: "onTouched",
@@ -94,13 +110,10 @@ export function IntakeForm() {
       </Stack>
 
       <Button type="submit" fullWidth fw={600}>
-        Send my details to reception
+        {t("submit")}
       </Button>
 
-      <p className="text-sm text-ink-muted">
-        A member of staff can see this form as you fill it in, so they can help
-        if you get stuck. Nothing is shared outside the hospital.
-      </p>
+      <p className="text-sm text-ink-muted">{t("privacy")}</p>
     </form>
   );
 }
