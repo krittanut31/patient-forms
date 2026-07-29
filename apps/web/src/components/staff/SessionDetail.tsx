@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Button } from "@mantine/core";
 import type {
   FieldPatch,
   FieldState,
@@ -103,12 +104,15 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
           <p className="mt-1.5 text-sm text-ink-muted">
             It was submitted a while ago or the patient left without finishing.
           </p>
-          <Link
+          <Button
+            component={Link}
             href="/staff"
-            className="mt-4 inline-block rounded-field border border-line px-3 py-2 text-sm text-accent"
+            variant="default"
+            size="sm"
+            className="mt-4"
           >
             Back to the list
-          </Link>
+          </Button>
         </div>
       </div>
     );
@@ -118,12 +122,15 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     <article className="flex h-full flex-col">
       <header className="border-b border-line bg-surface-sub px-4 py-3">
         <div className="flex items-start gap-2">
-          <Link
+          <Button
+            component={Link}
             href="/staff"
-            className="-ml-2 flex min-h-11 items-center rounded-field px-2 text-sm font-medium text-accent lg:hidden"
+            variant="subtle"
+            size="sm"
+            className="-ml-2 lg:hidden"
           >
             ← List
-          </Link>
+          </Button>
 
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-semibold text-ink">

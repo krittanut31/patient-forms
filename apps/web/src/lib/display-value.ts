@@ -1,4 +1,5 @@
 import type { FieldConfig } from "./field-config";
+import { formatPhone } from "./phone";
 
 /**
  * What staff should read, rather than what the form stores.
@@ -17,6 +18,10 @@ export function displayValue(config: FieldConfig, value: string): string {
     // this list have drifted, and that should be visible, not swallowed.
     return value;
   }
+
+  // Stored as `+66812345678`; a space after the country code is the difference
+  // between reading it off the screen and reading it twice.
+  if (config.kind === "phone") return formatPhone(value);
 
   if (config.kind === "date") {
     const parsed = new Date(value);

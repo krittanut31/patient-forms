@@ -1,7 +1,14 @@
 import { FIELD_ORDER } from "@patient-forms/shared";
 import type { PatientFormField } from "@patient-forms/shared";
 
-export type FieldKind = "text" | "tel" | "email" | "date" | "textarea" | "select" | "nationality";
+export type FieldKind =
+  | "text"
+  | "phone"
+  | "email"
+  | "date"
+  | "textarea"
+  | "select"
+  | "nationality";
 
 export type SelectOption = { value: string; label: string };
 
@@ -15,6 +22,12 @@ export type FieldConfig = {
   autoComplete?: string;
   inputMode?: "text" | "tel" | "email";
   options?: SelectOption[];
+  /**
+   * Characters outside the set are dropped as they are typed rather than
+   * flagged afterwards. Only for fields where the wrong character is never a
+   * near miss worth showing back to the patient.
+   */
+  charset?: "name";
   /**
    * Selects and dates commit in one action, so their patch goes out at once.
    * Free text is debounced instead — see PATCH_DEBOUNCE_MS.
@@ -58,6 +71,7 @@ const CONFIGS: Record<PatientFormField, FieldConfig> = {
     kind: "text",
     required: true,
     autoComplete: "given-name",
+    charset: "name",
     immediate: false,
   },
   middleName: {
@@ -66,6 +80,7 @@ const CONFIGS: Record<PatientFormField, FieldConfig> = {
     kind: "text",
     required: false,
     autoComplete: "additional-name",
+    charset: "name",
     immediate: false,
   },
   lastName: {
@@ -74,6 +89,7 @@ const CONFIGS: Record<PatientFormField, FieldConfig> = {
     kind: "text",
     required: true,
     autoComplete: "family-name",
+    charset: "name",
     immediate: false,
   },
   dateOfBirth: {
@@ -96,10 +112,10 @@ const CONFIGS: Record<PatientFormField, FieldConfig> = {
   phone: {
     field: "phone",
     label: "Phone number",
-    kind: "tel",
+    kind: "phone",
     required: true,
-    hint: "Thai mobile, for example 081 234 5678",
-    autoComplete: "tel",
+    hint: "For example 081 234 5678",
+    autoComplete: "tel-national",
     inputMode: "tel",
     immediate: false,
   },
@@ -143,6 +159,15 @@ const CONFIGS: Record<PatientFormField, FieldConfig> = {
     kind: "text",
     required: false,
     autoComplete: "name",
+    immediate: false,
+  },
+  emergencyContactNumber: {
+    field: "emergencyContactNumber",
+    label: "Emergency contact number",
+    kind: "phone",
+    required: false,
+    autoComplete: "tel-national",
+    inputMode: "tel",
     immediate: false,
   },
   emergencyContactRelationship: {

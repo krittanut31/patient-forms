@@ -78,6 +78,28 @@ maximum corner radius of 6px anywhere in the system. All declared once in
 `globals.css` and exposed through `@theme inline`, so no component contains a hex
 value.
 
+**Light only.** The palette had a dark variant behind `prefers-color-scheme`; it
+was removed. A ward runs a dozen shared tablets and a wall display, and half of
+them follow whatever the OS decided at six in the evening — a list read by
+glancing at it should not change contrast under the person reading it depending
+on which device they picked up. `color-scheme: light` on the root keeps the
+native pickers and scrollbars in the same palette as the rest.
+
+### Mantine as the component layer
+
+Controls come from Mantine 9; layout, spacing and colour stay in Tailwind. The
+theme in `lib/mantine-theme.ts` re-points Mantine's semantic CSS variables at
+the tokens above (`--mantine-color-error` → `--danger`, and so on) and replaces
+its defaults for type scale, radius and input height, so adopting the library
+did not import a second design system alongside the first. Mantine's stylesheet
+is imported through its `styles.layer.css` build and `@layer mantine` is
+declared before Tailwind's layers, which makes a utility class win over a
+component style regardless of what order the bundler emits the two in.
+
+What this bought: a searchable `Select` with real listbox semantics for
+nationality and for the dialing code, and a `DateInput` whose calendar cannot
+be navigated to a future date at all.
+
 The accent is used for interaction only — focus rings, links, the submit button —
 and never for status. Otherwise "this is clickable" and "this needs attention"
 would compete for the same colour.
@@ -152,17 +174,32 @@ not make the row jitter sideways.
 | Component | Owns |
 | --- | --- |
 | `IntakeForm` | The `react-hook-form` instance, submit, and restoring a refreshed session |
-| `FieldRow` | Rendering one field and subscribing to **only that field's** error |
-| `Field` | Label, hint, error markup and the shared input class |
-| `NationalityCombobox` | The searchable listbox: filtering, keyboard, ARIA state |
+| `FieldRow` | Picking the control for one field and subscribing to **only that field's** error |
+| `PhoneField` | Dialing code and number as two controls over one stored string |
+| `Field` | Label, hint and error markup for the multi-control fields only |
 | `ConnectionNotice` | Saying something only when the socket is down |
 | `usePatientSession` | The socket. Knows nothing about the form |
+
+Single-control fields use Mantine's own `label` / `description` / `error` props
+and never touch `Field`. The phone fields cannot: two components that each build
+on `Input` inside one `Input.Wrapper` both claim the wrapper's `inputId`, and
+two elements answering to the same id is a broken label, so those keep the
+hand-written wrapper.
 
 The re-render discipline is the load-bearing part. Inputs stay uncontrolled
 under `register`. Each `FieldRow` calls `useFormState({ control, name })`, which
 subscribes it to its own error and nothing else — reading `formState.errors` up
-in `IntakeForm` would re-render all thirteen fields on every keystroke once any
+in `IntakeForm` would re-render all fourteen fields on every keystroke once any
 one of them had been touched.
+
+Two fields filter as they are typed rather than flagging afterwards: names drop
+anything that is not a letter, a combining mark, a space or an apostrophe, and
+phone numbers drop everything that is not a digit. The character is rewritten on
+the element before `react-hook-form` reads the event, which keeps the input
+uncontrolled. This is the one deliberate exception to "send invalid values too":
+a digit in a name is not a near miss a nurse can act on, whereas a malformed
+whole value — a phone number of the wrong length, an email with no `@` — still
+travels with `isValid: false` exactly as before.
 
 `usePatientSession` deliberately does not receive the form. It reports that a
 resync is needed by bumping a token, and the form hands over its values in
@@ -314,9 +351,13 @@ often the one staff need next.
   throwaway scripts against a running server — the lobby throttle, the idle
   transition in real time, room leave actually stopping delivery, the lost-update
   race — but none of that is reproducible by anyone else.
-- Nothing has been verified in a real browser. The change flash, the combobox
+- Nothing has been verified in a real browser. The change flash, the dropdown
   keyboard handling, the master-detail behaviour at the breakpoint and the iOS
   zoom threshold are all reasoned from the markup, not observed.
+- Phone validation is exact for `+66` and a length check everywhere else. There
+  is no libphonenumber, so a wrong-but-plausible number for another country
+  will pass. The dialing code list itself is complete — all 242 entries, keyed
+  by ISO code because ten dial codes are shared by more than one country.
 - A disconnected session that was partly filled in is never cleaned up. The brief
   specifies expiry only for empty and submitted sessions, and inventing a third
   rule was out of scope — but it means a patient who closes the tab halfway sits

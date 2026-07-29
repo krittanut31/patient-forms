@@ -1,11 +1,32 @@
+/*
+ * Layer order, declared before the import so it wins over the one Tailwind
+ * declares for itself. Mantine sits between Tailwind's base and its utilities
+ * on purpose:
+ *
+ *   - above `base`, because Preflight zeroes `border-width` and clears
+ *     backgrounds on form elements. Below it, every Mantine input renders with
+ *     no border and no fill.
+ *   - below `utilities`, so a utility class on a Mantine component still wins.
+ */
+@layer theme, base, components, mantine, utilities;
+
 @import "tailwindcss";
 
 /*
  * Runtime palette. Declared as plain custom properties rather than inside
- * @theme so the media query below can swap them; @theme inline then exposes
- * them to Tailwind, which keeps the generated utilities pointing at the var.
+ * @theme so a future theme could swap them at runtime; @theme inline then
+ * exposes them to Tailwind, which keeps the generated utilities pointing at
+ * the var.
+ *
+ * Light only, on purpose. A ward has a dozen shared tablets and one wall
+ * display, and half of them follow whatever the OS decided at 6pm — a list
+ * that a nurse reads by glancing at it should not change contrast under her
+ * depending on which device she picked up. `color-scheme` below also keeps the
+ * native date picker and scrollbars in the same palette as everything else.
  */
 :root {
+  color-scheme: light;
+
   --canvas: #eef2f4;
   --surface: #ffffff;
   --surface-sub: #f6f9fa;
@@ -25,30 +46,6 @@
 
   --danger: #b42318;
   --danger-wash: #fdf0ef;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #0d1518;
-    --surface: #141f24;
-    --surface-sub: #101a1e;
-    --ink: #e3edf1;
-    --ink-muted: #8aa2ac;
-    --line: #24343b;
-    --line-soft: #1b282e;
-    --accent: #3fa9bd;
-    --accent-ink: #06181d;
-
-    --status-new: #8399a4;
-    --status-typing: #35a883;
-    --status-idle: #e9843f;
-    --status-submitted: #7096cc;
-    --status-disconnected: #a08f85;
-    --status-idle-wash: #2a1d14;
-
-    --danger: #f28b82;
-    --danger-wash: #2a1616;
-  }
 }
 
 @theme inline {
@@ -134,6 +131,42 @@
 
 .field-flash {
   animation: field-flash 600ms ease-out;
+}
+
+/*
+ * The date of birth calendar, stretched to the width of the field it drops out
+ * of. `popoverProps={{ width: "target" }}` widens the box; these spread the
+ * grids inside it, which otherwise sit at their natural width against the left
+ * edge of a box twice their size.
+ *
+ * Mantine has a `fullWidth` prop that does exactly this, and it is typed on
+ * `DateInput` through `CalendarBaseProps` — but `DateInput` filters its
+ * calendar props through `pickCalendarProps`, and `fullWidth` is not in the
+ * list it forwards. Passing it compiles and does nothing.
+ *
+ * In `utilities` because that is the only layer declared after `mantine`;
+ * anything earlier loses to the component's own width rules.
+ */
+@layer utilities {
+  .mantine-DateInput-calendarHeader {
+    max-width: none;
+    width: 100%;
+  }
+
+  .mantine-DateInput-levelsGroup,
+  .mantine-DateInput-month,
+  .mantine-DateInput-monthsList,
+  .mantine-DateInput-yearsList,
+  .mantine-DateInput-monthsListControl,
+  .mantine-DateInput-yearsListControl {
+    width: 100%;
+  }
+
+  /* Wide but not tall. Mantine's own full-width rule adds `aspect-ratio: 1`,
+     which on a 576px form turns six rows of days into a 500px drop. */
+  .mantine-DateInput-day {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

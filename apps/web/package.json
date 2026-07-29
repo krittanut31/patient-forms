@@ -11,7 +11,11 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
+    "@mantine/core": "^9.5.0",
+    "@mantine/dates": "^9.5.0",
+    "@mantine/hooks": "^9.5.0",
     "@patient-forms/shared": "*",
+    "dayjs": "^1.11.21",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
