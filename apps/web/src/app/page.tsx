@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Stack, Title } from "@mantine/core";
 
 /**
  * A signpost, not a landing page. The two audiences arrive from different
@@ -8,9 +9,11 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-4 py-12">
-      <h1 className="text-xl font-semibold tracking-tight">Outpatient intake</h1>
+      <Title order={1} className="text-xl font-semibold tracking-tight">
+        Outpatient intake
+      </Title>
 
-      <div className="flex flex-col gap-3">
+      <Stack gap="sm">
         <Link
           href="/patient"
           className="rounded-panel border border-line bg-surface px-4 py-4 hover:border-accent"
@@ -30,7 +33,7 @@ export default function Home() {
             See who is filling in a form right now
           </span>
         </Link>
-      </div>
+      </Stack>
     </main>
   );
 }

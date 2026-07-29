@@ -229,8 +229,20 @@ Deployed URLs: _not deployed yet._
 - **Reconnect resync** — on reconnect the patient's form pushes its current
   values back to the server. Anything typed while the connection was down exists
   only in the browser, and without this staff would keep looking at a stale form.
-- **Nationality combobox** — built by hand with real ARIA listbox semantics and
-  keyboard support rather than a native `select`, because the list is over a
-  hundred entries.
 - **Submit flushes pending debounces** — the last few characters typed before
   pressing submit would otherwise never leave the browser.
+- **Emergency contact number** — the brief lists a name and a relationship for
+  the emergency contact but no way to ring them, which is not an emergency
+  contact. Added as an optional fourteenth field.
+- **Dialing code on both phone fields** — a searchable code selector beside the
+  number. Both halves are stored as one string (`+66812345678`), so the event
+  contract still has one entry per phone and the progress count stays honest.
+- **Light only** — the dark palette was removed rather than left to the OS. See
+  the reasoning in `docs/development-plan.md`.
+
+## Stack notes
+
+Mantine 9 supplies the controls; Tailwind still owns layout, spacing and the
+palette. `lib/mantine-theme.ts` re-points Mantine's semantic variables at the
+tokens in `globals.css`, and `@layer mantine` is declared ahead of Tailwind's
+layers so a utility class always beats a component style.

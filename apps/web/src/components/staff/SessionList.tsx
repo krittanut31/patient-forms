@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Alert, NativeSelect } from "@mantine/core";
 import { SUBMITTED_RETENTION_MS } from "@patient-forms/shared";
 import {
   countAttention,
@@ -60,28 +61,32 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
           <label htmlFor="sort" className="text-xs text-ink-muted">
             Sort by
           </label>
-          <select
+          <NativeSelect
             id="sort"
+            size="xs"
             value={sort}
-            onChange={(event) => setSort(event.target.value as SortKey)}
-            className="min-h-11 rounded-field border border-line bg-surface px-2 text-xs text-ink"
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(event) => setSort(event.currentTarget.value as SortKey)}
+            data={SORT_OPTIONS}
+            aria-label="Sort the list"
+            styles={{ input: { minHeight: "2.75rem" } }}
+          />
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto">
         {connection !== "online" && (
-          <p className="border-b border-status-idle bg-status-idle-wash px-4 py-2.5 text-xs text-ink">
+          <Alert
+            variant="light"
+            radius={0}
+            classNames={{
+              root: "border-b border-status-idle bg-status-idle-wash px-4 py-2.5",
+              body: "text-xs text-ink",
+            }}
+          >
             {connection === "connecting"
               ? "Reconnecting. This list may be out of date."
               : "Disconnected. This list is frozen and not updating."}
-          </p>
+          </Alert>
         )}
 
         {active.length === 0 && submitted.length === 0 ? (

@@ -1,3 +1,4 @@
+import { Badge } from "@mantine/core";
 import type { SessionStatus } from "@patient-forms/shared";
 
 export const STATUS_LABEL: Record<SessionStatus, string> = {
@@ -80,13 +81,25 @@ function Glyph({ status }: { status: SessionStatus }) {
   }
 }
 
+/**
+ * A Mantine `Badge` carrying the palette above rather than a Mantine colour.
+ *
+ * The status system is the one place this UI is allowed to be loud, so the
+ * variant weighting stays hand-set — `Badge color="orange"` would make idle
+ * look like the other four.
+ */
 export function StatusChip({ status }: { status: SessionStatus }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-chip border px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${CHIP[status]}`}
+    <Badge
+      variant="outline"
+      radius="xs"
+      leftSection={<Glyph status={status} />}
+      classNames={{
+        root: `h-auto border px-2 py-0.5 normal-case tracking-normal ${CHIP[status]}`,
+        label: "text-xs font-semibold",
+      }}
     >
-      <Glyph status={status} />
       {STATUS_LABEL[status]}
-    </span>
+    </Badge>
   );
 }

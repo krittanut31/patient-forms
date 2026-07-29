@@ -1,3 +1,4 @@
+import { Alert } from "@mantine/core";
 import type { ConnectionState } from "@/lib/use-patient-session";
 
 /**
@@ -8,13 +9,21 @@ export function ConnectionNotice({ state }: { state: ConnectionState }) {
   return (
     <div aria-live="polite">
       {state !== "online" && (
-        <p className="rounded-panel border border-status-idle bg-status-idle-wash px-4 py-3 text-base text-ink">
-          {state === "connecting"
-            ? "Reconnecting to reception."
-            : "You are offline."}{" "}
-          Keep filling in the form — what you have typed is safe and will be
-          sent as soon as the connection is back.
-        </p>
+        <Alert
+          variant="light"
+          radius="lg"
+          title={
+            state === "connecting" ? "Reconnecting to reception" : "You are offline"
+          }
+          classNames={{
+            root: "border border-status-idle bg-status-idle-wash",
+            title: "text-ink",
+            body: "text-base text-ink",
+          }}
+        >
+          Keep filling in the form — what you have typed is safe and will be sent
+          as soon as the connection is back.
+        </Alert>
       )}
     </div>
   );
