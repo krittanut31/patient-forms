@@ -1,0 +1,92 @@
+import type { SessionStatus } from "@patient-forms/shared";
+
+export const STATUS_LABEL: Record<SessionStatus, string> = {
+  new: "New",
+  typing: "Typing",
+  idle: "Idle",
+  submitted: "Submitted",
+  disconnected: "Disconnected",
+};
+
+/**
+ * Weight is inverted from the usual badge treatment: only `idle` is filled.
+ * If every status were equally saturated, urgency would read as decoration and
+ * the one row a nurse needs to see would not stand out from the four that are
+ * fine.
+ */
+const CHIP: Record<SessionStatus, string> = {
+  idle: "bg-status-idle text-surface border-status-idle",
+  new: "border-status-new/40 text-status-new bg-status-new/10",
+  typing: "border-status-typing/40 text-status-typing bg-status-typing/10",
+  submitted:
+    "border-status-submitted/40 text-status-submitted bg-status-submitted/10",
+  disconnected:
+    "border-status-disconnected/40 text-status-disconnected bg-status-disconnected/10",
+};
+
+export const RAIL: Record<SessionStatus, string> = {
+  idle: "bg-status-idle",
+  new: "bg-status-new",
+  typing: "bg-status-typing",
+  submitted: "bg-status-submitted",
+  disconnected: "bg-status-disconnected",
+};
+
+/** Colour alone is never the signal — every chip carries a glyph and a word. */
+function Glyph({ status }: { status: SessionStatus }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.4,
+    strokeLinecap: "round" as const,
+    "aria-hidden": true,
+    className: "size-3.5 shrink-0",
+  };
+
+  switch (status) {
+    case "idle": // a clock: this one is about elapsed time
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5.5l3.5 2" />
+        </svg>
+      );
+    case "typing": // a live trace, as on a monitor
+      return (
+        <svg {...common}>
+          <path d="M2 12h4l2.5-6 4 13 3-8 2.5 3H22" />
+        </svg>
+      );
+    case "new":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" strokeDasharray="3 3.2" />
+        </svg>
+      );
+    case "submitted":
+      return (
+        <svg {...common} strokeLinejoin="round">
+          <path d="M4 12.5 9.5 18 20 6.5" />
+        </svg>
+      );
+    case "disconnected":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M6 18 18 6" />
+        </svg>
+      );
+  }
+}
+
+export function StatusChip({ status }: { status: SessionStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-chip border px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${CHIP[status]}`}
+    >
+      <Glyph status={status} />
+      {STATUS_LABEL[status]}
+    </span>
+  );
+}
