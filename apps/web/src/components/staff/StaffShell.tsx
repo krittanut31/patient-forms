@@ -20,7 +20,9 @@ export function StaffShell({ children }: { children: ReactNode }) {
       <aside
         className={[
           "min-w-0 flex-col border-r border-line bg-surface",
-          "w-full lg:flex lg:w-[35%] lg:max-w-md lg:min-w-80",
+          // 35% as the brief asks, floored so it stays usable on a small laptop
+          // and capped so it does not become a corridor on an ultrawide.
+          "w-full lg:flex lg:w-[35%] lg:max-w-2xl lg:min-w-80",
           // On a phone the list and the detail are two screens, not two panes.
           detailOpen ? "hidden" : "flex",
         ].join(" ")}
@@ -30,7 +32,10 @@ export function StaffShell({ children }: { children: ReactNode }) {
 
       <main
         className={[
-          "min-w-0 flex-1 overflow-y-auto",
+          // Not scrollable itself — the detail view scrolls its own field list
+          // under a pinned header. Two nested scroll containers would fight
+          // each other, and on iOS the outer one rubber-bands over the inner.
+          "min-w-0 flex-1 overflow-hidden",
           detailOpen ? "block" : "hidden lg:block",
         ].join(" ")}
       >

@@ -4,6 +4,9 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { inputClass } from "./Field";
 
+/** Kept in step with the `max-h-64` on the listbox below. */
+const LIST_MAX_HEIGHT = 256;
+
 type Props = {
   id: string;
   value: string;
@@ -117,11 +120,20 @@ export function NationalityCombobox({
           setActiveIndex(0);
           setOpen(true);
         }}
-        onFocus={() => {
+        onFocus={(event) => {
           setOpen(true);
           setQuery("");
           setActiveIndex(Math.max(0, NATIONALITIES.indexOf(value)));
           onFocus();
+
+          // On a phone this field sits low enough that the list would open
+          // behind the on-screen keyboard. Only scroll when it would not fit,
+          // so the page does not jump for no reason on a desktop.
+          const input = event.currentTarget;
+          const room = window.innerHeight - input.getBoundingClientRect().bottom;
+          if (room < LIST_MAX_HEIGHT) {
+            input.scrollIntoView({ block: "center" });
+          }
         }}
         onBlur={() => {
           close();

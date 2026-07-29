@@ -19,7 +19,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="h-full">
+    // `dvh` rather than `vh`: on a phone the address bar makes `100vh` taller
+    // than what is actually on screen, which pushes the bottom of the staff
+    // list under the browser chrome where nobody can reach it.
+    <html lang="en" className="h-dvh">
       <body className="flex min-h-full flex-col bg-canvas text-ink">
         {children}
       </body>

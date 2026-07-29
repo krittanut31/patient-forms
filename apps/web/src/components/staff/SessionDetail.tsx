@@ -145,7 +145,11 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             )}
           </div>
 
-          {summary && <StatusChip status={summary.status} />}
+          {summary && (
+            <span className="shrink-0">
+              <StatusChip status={summary.status} />
+            </span>
+          )}
         </div>
 
         {/* The whole reason for the screen: where the patient actually is. */}

@@ -64,7 +64,7 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
             id="sort"
             value={sort}
             onChange={(event) => setSort(event.target.value as SortKey)}
-            className="min-h-8 rounded-field border border-line bg-surface px-2 text-xs text-ink"
+            className="min-h-11 rounded-field border border-line bg-surface px-2 text-xs text-ink"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
