@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { FieldConfig } from "@/lib/field-config";
+import { fieldLabel } from "./field-label";
 
 type FieldProps = {
   config: FieldConfig;
@@ -11,27 +12,28 @@ export const hintId = (field: string) => `${field}-hint`;
 export const errorId = (field: string) => `${field}-error`;
 
 /**
- * Label, hint and error for one field.
+ * Label, hint and error for a field made of more than one control.
  *
- * Optional fields are marked rather than required ones: eight of the thirteen
- * are required, so flagging those instead would put a marker on most of the
- * form and stop meaning anything.
+ * Every single-control field uses Mantine's own `label` / `description` /
+ * `error` props instead. This exists for the phone fields, where a dialing
+ * code select and a number input share one label: nesting two components that
+ * each build on `Input` inside a `Input.Wrapper` makes both of them claim the
+ * wrapper's `inputId`, and two elements answering to the same id is a
+ * genuinely broken label. Spacing and weight mirror the theme's InputWrapper
+ * styles so the two paths line up.
  */
 export function Field({ config, error, children }: FieldProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div>
       <label
         htmlFor={config.field}
-        className="flex items-baseline gap-2 text-base font-medium text-ink"
+        className="mb-1.5 block text-base font-medium text-ink"
       >
-        {config.label}
-        {!config.required && (
-          <span className="text-xs font-normal text-ink-muted">Optional</span>
-        )}
+        {fieldLabel(config)}
       </label>
 
       {config.hint && (
-        <p id={hintId(config.field)} className="text-sm text-ink-muted">
+        <p id={hintId(config.field)} className="mb-1.5 text-sm text-ink-muted">
           {config.hint}
         </p>
       )}
@@ -39,17 +41,10 @@ export function Field({ config, error, children }: FieldProps) {
       {children}
 
       {error && (
-        <p
-          id={errorId(config.field)}
-          className="text-sm font-medium text-danger"
-        >
+        <p id={errorId(config.field)} className="mt-1.5 text-sm font-medium text-danger">
           {error}
         </p>
       )}
     </div>
   );
 }
-
-export const inputClass =
-  "w-full min-h-12 rounded-field border border-line bg-surface px-3 py-2 text-md text-ink " +
-  "placeholder:text-ink-muted aria-[invalid=true]:border-danger aria-[invalid=true]:bg-danger-wash";

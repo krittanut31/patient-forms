@@ -17,13 +17,21 @@ export type PatientForm = {
   preferredLanguage: string;
   nationality: string;
   emergencyContactName: string;
+  emergencyContactNumber: string;
   emergencyContactRelationship: string;
   religion: string;
 };
 
 export type PatientFormField = keyof PatientForm;
 
-/** Display order, as specified in the brief. Also the source of `totalFields`. */
+/**
+ * Display order. Follows the brief, with `emergencyContactNumber` added next to
+ * the contact it belongs to — a name and a relationship with no way to ring the
+ * person is not an emergency contact.
+ *
+ * Also the source of `totalFields`, so adding a field here moves every progress
+ * count on the staff side with it.
+ */
 export const FIELD_ORDER = [
   "firstName",
   "middleName",
@@ -36,6 +44,7 @@ export const FIELD_ORDER = [
   "preferredLanguage",
   "nationality",
   "emergencyContactName",
+  "emergencyContactNumber",
   "emergencyContactRelationship",
   "religion",
 ] as const satisfies readonly PatientFormField[];

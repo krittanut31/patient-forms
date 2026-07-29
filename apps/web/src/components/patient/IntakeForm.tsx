@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Button, Stack } from "@mantine/core";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { PatientForm, PatientFormField } from "@patient-forms/shared";
@@ -79,7 +80,7 @@ export function IntakeForm() {
 
       {/* Single column at every width — a two-column form on a phone is how
           people miss a field entirely. */}
-      <div className="flex flex-col gap-5">
+      <Stack gap="lg">
         {FIELD_CONFIGS.map((config) => (
           <FieldRow
             key={config.field}
@@ -90,14 +91,11 @@ export function IntakeForm() {
             onFocus={session.focus}
           />
         ))}
-      </div>
+      </Stack>
 
-      <button
-        type="submit"
-        className="min-h-12 w-full rounded-field bg-accent px-4 text-md font-semibold text-accent-ink hover:opacity-90 active:opacity-80"
-      >
+      <Button type="submit" fullWidth fw={600}>
         Send my details to reception
-      </button>
+      </Button>
 
       <p className="text-sm text-ink-muted">
         A member of staff can see this form as you fill it in, so they can help

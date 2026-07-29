@@ -1,12 +1,21 @@
 import { z } from "zod";
 import { FIELD_ORDER } from "@patient-forms/shared";
 import type { PatientForm, PatientFormField } from "@patient-forms/shared";
+import { isStoredPhoneValid } from "./phone";
 
 const MAX_AGE_YEARS = 120;
 
-/** Accepts 08x, 06x, 09x and +66 forms, with spaces, dashes or parens. */
-const THAI_MOBILE = /^(?:\+?66|0)[689]\d{8}$/;
-const stripPunctuation = (value: string) => value.replace(/[\s\-().]/g, "");
+/**
+ * Letters, combining marks, spaces and the apostrophe. Nothing else.
+ *
+ * `\p{M}` is not optional: Thai vowels and tone marks are combining marks, and
+ * a letters-only rule without it rejects most Thai names outright. The
+ * apostrophe survives for O'Brien and d'Souza; hyphens and full stops do not,
+ * which is the rule as specified.
+ */
+const NAME_CHARSET = /^[\p{L}\p{M}' ]+$/u;
+const nameMessage = (label: string) =>
+  `${label} cannot contain numbers or symbols`;
 
 const required = (label: string) =>
   z
@@ -15,6 +24,14 @@ const required = (label: string) =>
     .min(1, `${label} is required`);
 
 const optional = z.string().trim();
+
+const nameField = (label: string, isRequired: boolean) => {
+  const base = isRequired ? required(label) : optional;
+  return base.refine(
+    (value) => value === "" || NAME_CHARSET.test(value),
+    nameMessage(label),
+  );
+};
 
 /**
  * One schema per field rather than only a whole-form schema.
@@ -25,9 +42,9 @@ const optional = z.string().trim();
  * is not, since it only populates once a field has been touched.
  */
 export const fieldSchemas = {
-  firstName: required("First name"),
-  middleName: optional,
-  lastName: required("Last name"),
+  firstName: nameField("First name", true),
+  middleName: nameField("Middle name", false),
+  lastName: nameField("Last name", true),
 
   dateOfBirth: required("Date of birth").pipe(
     z
@@ -43,18 +60,15 @@ export const fieldSchemas = {
 
   gender: required("Gender"),
 
+  // The dialing code is part of the stored value, so validity depends on both
+  // halves at once — see lib/phone.ts.
   phone: required("Phone number").pipe(
-    z
-      .string()
-      .refine(
-        (value) => THAI_MOBILE.test(stripPunctuation(value)),
-        "Enter a Thai mobile number, for example 081 234 5678",
-      ),
+    z.string().refine(isStoredPhoneValid, "Check the phone number for that country"),
   ),
 
   email: optional.refine(
     (value) => value === "" || z.email().safeParse(value).success,
-    "Check the email address",
+    "Please enter valid email",
   ),
 
   address: required("Address"),
@@ -62,6 +76,10 @@ export const fieldSchemas = {
   nationality: required("Nationality"),
 
   emergencyContactName: optional,
+  emergencyContactNumber: optional.refine(
+    (value) => value === "" || isStoredPhoneValid(value),
+    "Check the phone number for that country",
+  ),
   emergencyContactRelationship: optional,
   religion: optional,
 } satisfies Record<PatientFormField, z.ZodType<string>>;
