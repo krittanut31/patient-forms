@@ -7,57 +7,60 @@
  * `splitPhone` puts the two controls back together when a session is restored.
  */
 
+import rawDialCodes from "./dial-codes.json";
+
 export type DialCode = {
+  /** ISO 3166-1 alpha-2. The option value, because dial codes are not unique. */
+  iso: string;
   code: string;
   country: string;
 };
 
-/**
- * The countries an outpatient department in Bangkok actually sees, then the
- * large ones. Not the full ITU list — a scrolling list of 200 is slower to use
- * than typing, and the wrong code is worse than no code.
- */
-export const DIAL_CODES: DialCode[] = [
-  { code: "+66", country: "Thailand" },
-  { code: "+95", country: "Myanmar" },
-  { code: "+856", country: "Laos" },
-  { code: "+855", country: "Cambodia" },
-  { code: "+84", country: "Vietnam" },
-  { code: "+60", country: "Malaysia" },
-  { code: "+65", country: "Singapore" },
-  { code: "+62", country: "Indonesia" },
-  { code: "+63", country: "Philippines" },
-  { code: "+86", country: "China" },
-  { code: "+852", country: "Hong Kong" },
-  { code: "+886", country: "Taiwan" },
-  { code: "+81", country: "Japan" },
-  { code: "+82", country: "South Korea" },
-  { code: "+91", country: "India" },
-  { code: "+7", country: "Russia" },
-  { code: "+971", country: "United Arab Emirates" },
-  { code: "+966", country: "Saudi Arabia" },
-  { code: "+61", country: "Australia" },
-  { code: "+64", country: "New Zealand" },
-  { code: "+44", country: "United Kingdom" },
-  { code: "+353", country: "Ireland" },
-  { code: "+33", country: "France" },
-  { code: "+49", country: "Germany" },
-  { code: "+39", country: "Italy" },
-  { code: "+34", country: "Spain" },
-  { code: "+31", country: "Netherlands" },
-  { code: "+41", country: "Switzerland" },
-  { code: "+46", country: "Sweden" },
-  { code: "+47", country: "Norway" },
-  { code: "+45", country: "Denmark" },
-  { code: "+1", country: "United States / Canada" },
-];
-
+export const DEFAULT_ISO = "TH";
 export const DEFAULT_DIAL_CODE = "+66";
 
+/**
+ * Every country, Thailand first.
+ *
+ * Ten dial codes are shared by more than one country — `+1` by the United
+ * States and Canada, `+61` by Australia and two island territories — so the
+ * select is keyed by ISO code and only displays the dial code. Moving Thailand
+ * to the front is also what makes `+66` resolve back to Thailand rather than to
+ * whatever else sorted first, since the reverse lookup below keeps the first
+ * entry it sees.
+ */
+export const DIAL_CODES: DialCode[] = (() => {
+  const all = rawDialCodes.map((entry) => ({
+    iso: entry.code,
+    code: entry.dial_code,
+    country: entry.name,
+  }));
+
+  const thailand = all.filter((entry) => entry.iso === DEFAULT_ISO);
+  return [...thailand, ...all.filter((entry) => entry.iso !== DEFAULT_ISO)];
+})();
+
+const BY_ISO = new Map(DIAL_CODES.map((entry) => [entry.iso, entry]));
+
+const ISO_BY_CODE = new Map<string, string>();
+for (const entry of DIAL_CODES) {
+  if (!ISO_BY_CODE.has(entry.code)) ISO_BY_CODE.set(entry.code, entry.iso);
+}
+
+export const dialCodeOf = (iso: string): string =>
+  BY_ISO.get(iso)?.code ?? DEFAULT_DIAL_CODE;
+
+export const countryOf = (iso: string): string | undefined =>
+  BY_ISO.get(iso)?.country;
+
+/** Which country to show selected for a stored number. See the note above. */
+export const isoOf = (code: string): string =>
+  ISO_BY_CODE.get(code) ?? DEFAULT_ISO;
+
 /** Longest first, so `+856` is not read as `+85` followed by a 6. */
-const CODES_BY_LENGTH = [...DIAL_CODES]
-  .map((entry) => entry.code)
-  .sort((a, b) => b.length - a.length);
+const CODES_BY_LENGTH = [...new Set(DIAL_CODES.map((entry) => entry.code))].sort(
+  (a, b) => b.length - a.length,
+);
 
 export const digitsOnly = (value: string): string => value.replace(/\D/g, "");
 

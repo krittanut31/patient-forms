@@ -2,11 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { Group, Select, TextInput } from "@mantine/core";
+import type {
+  ComboboxItem,
+  ComboboxParsedItem,
+  OptionsFilter,
+} from "@mantine/core";
 import type { FieldConfig } from "@/lib/field-config";
 import {
+  countryOf,
   DEFAULT_DIAL_CODE,
+  DEFAULT_ISO,
   DIAL_CODES,
+  dialCodeOf,
   digitsOnly,
+  isoOf,
   joinPhone,
   splitPhone,
 } from "@/lib/phone";
@@ -23,23 +32,46 @@ type Props = {
   onBlur: () => void;
 };
 
-const COUNTRY_BY_CODE = new Map(
-  DIAL_CODES.map((entry) => [entry.code, entry.country]),
-);
-
-const SELECT_DATA = DIAL_CODES.map((entry) => ({
-  value: entry.code,
+/** Keyed by ISO code: ten dial codes belong to more than one country. */
+const SELECT_DATA: ComboboxItem[] = DIAL_CODES.map((entry) => ({
+  value: entry.iso,
   label: entry.code,
 }));
+
+/** Lower-cased once at module load, not on every keystroke of a search. */
+const SEARCH_INDEX = new Map(
+  DIAL_CODES.map((entry) => [
+    entry.iso,
+    `${entry.country} ${entry.code} ${entry.iso}`.toLowerCase(),
+  ]),
+);
+
+/**
+ * Search matches the country, not the label.
+ *
+ * The option label is the dial code alone, because that is all that fits in the
+ * trigger beside the number — but nobody knows Laos by `+856`. Without this,
+ * typing "Laos" into a list of 242 codes finds nothing.
+ */
+const isOption = (item: ComboboxParsedItem): item is ComboboxItem =>
+  "value" in item;
+
+const filterByCountry: OptionsFilter = ({ options, search }) => {
+  const query = search.trim().toLowerCase();
+  if (query === "") return options;
+  return options
+    .filter(isOption)
+    .filter((option) => SEARCH_INDEX.get(option.value)?.includes(query));
+};
 
 /**
  * Dialing code and number, stored as one string.
  *
- * The code lives in local state as well as in the stored value because the two
- * are not the same thing: picking `+65` before typing any digits has to stick
- * on screen, but it must not write `+65` into a field the patient has left
- * empty — that would count as filled on the staff list and read as progress
- * that never happened.
+ * The selected country lives in local state as well as in the stored value
+ * because the two are not the same thing: picking Singapore before typing any
+ * digits has to stick on screen, but it must not write `+65` into a field the
+ * patient has left empty — that would count as filled on the staff list and
+ * read as progress that never happened.
  */
 export function PhoneField({
   config,
@@ -51,44 +83,46 @@ export function PhoneField({
   onBlur,
 }: Props) {
   const parsed = useMemo(() => splitPhone(value), [value]);
-  const [dialCode, setDialCode] = useState(
-    value === "" ? DEFAULT_DIAL_CODE : parsed.dialCode,
+  const [iso, setIso] = useState(
+    value === "" ? DEFAULT_ISO : isoOf(parsed.dialCode),
   );
 
   // A restored session arrives after the first render, so follow the stored
   // code whenever there is one rather than leaving the selector on the default.
-  const activeCode = value === "" ? dialCode : parsed.dialCode;
+  const activeIso = value === "" ? iso : isoOf(parsed.dialCode);
+  const activeCode = dialCodeOf(activeIso);
 
   return (
     <Field config={config} error={error}>
       <Group gap="xs" wrap="nowrap" align="flex-start">
         <Select
           data={SELECT_DATA}
-          value={activeCode}
+          value={activeIso}
           onChange={(next) => {
             if (!next) return;
-            setDialCode(next);
-            onChange(joinPhone(next, parsed.national));
+            setIso(next);
+            onChange(joinPhone(dialCodeOf(next), parsed.national));
           }}
           onFocus={onFocus}
           onBlur={onBlur}
           allowDeselect={false}
           searchable
-          nothingFoundMessage="No country code"
+          filter={filterByCountry}
+          nothingFoundMessage="No country by that name"
           aria-label={`${config.label} country code`}
-          // Long enough for +856 without truncating, narrow enough to leave the
-          // number itself the wide control on a 360px phone.
+          // Long enough for the five-character codes without truncating, narrow
+          // enough to leave the number the wide control on a 360px phone.
           w={104}
           styles={{ input: { paddingRight: "1.75rem" } }}
           renderOption={({ option }) => (
             <span className="flex w-full items-baseline justify-between gap-3">
-              <span className="tabular font-medium">{option.value}</span>
-              <span className="text-xs text-ink-muted">
-                {COUNTRY_BY_CODE.get(option.value)}
+              <span className="tabular font-medium">{option.label}</span>
+              <span className="truncate text-xs text-ink-muted">
+                {countryOf(option.value)}
               </span>
             </span>
           )}
-          comboboxProps={{ width: 260, position: "bottom-start" }}
+          comboboxProps={{ width: 300, position: "bottom-start" }}
         />
 
         <TextInput

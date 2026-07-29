@@ -354,10 +354,10 @@ often the one staff need next.
 - Nothing has been verified in a real browser. The change flash, the dropdown
   keyboard handling, the master-detail behaviour at the breakpoint and the iOS
   zoom threshold are all reasoned from the markup, not observed.
-- The dialing code list is 32 entries chosen for a Bangkok outpatient
-  department, not the full ITU set. Validation is exact for `+66` and a length
-  check everywhere else — there is no libphonenumber, so a wrong-but-plausible
-  number for another country will pass.
+- Phone validation is exact for `+66` and a length check everywhere else. There
+  is no libphonenumber, so a wrong-but-plausible number for another country
+  will pass. The dialing code list itself is complete — all 242 entries, keyed
+  by ISO code because ten dial codes are shared by more than one country.
 - A disconnected session that was partly filled in is never cleaned up. The brief
   specifies expiry only for empty and submitted sessions, and inventing a third
   rule was out of scope — but it means a patient who closes the tab halfway sits

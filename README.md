@@ -234,9 +234,10 @@ Deployed URLs: _not deployed yet._
 - **Emergency contact number** — the brief lists a name and a relationship for
   the emergency contact but no way to ring them, which is not an emergency
   contact. Added as an optional fourteenth field.
-- **Dialing code on both phone fields** — a searchable code selector beside the
-  number. Both halves are stored as one string (`+66812345678`), so the event
-  contract still has one entry per phone and the progress count stays honest.
+- **Dialing code on both phone fields** — every country, searchable by name,
+  Thailand first. Both halves are stored as one string (`+66812345678`), so the
+  event contract still has one entry per phone and the progress count stays
+  honest.
 - **Light only** — the dark palette was removed rather than left to the OS. See
   the reasoning in `docs/development-plan.md`.
 
