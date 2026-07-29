@@ -113,16 +113,26 @@ export function PhoneField({
           // Long enough for the five-character codes without truncating, narrow
           // enough to leave the number the wide control on a 360px phone.
           w={104}
-          styles={{ input: { paddingRight: "1.75rem" } }}
+          styles={{
+            input: { paddingRight: "1.75rem" },
+            // A dropdown row is a touch target like any other.
+            option: { minHeight: "2.75rem", alignItems: "center" },
+          }}
+          // No truncation. The longest name in the list runs to 44 characters —
+          // "Korea, Democratic People's Republic of Korea" — which does not fit
+          // on one line inside a dropdown narrow enough for a 360px phone, so it
+          // wraps rather than being cut. Mantine's option already sets
+          // `overflow-wrap: break-word`; the earlier clipping was a `truncate`
+          // class of mine, not the library.
           renderOption={({ option }) => (
-            <span className="flex w-full items-baseline justify-between gap-3">
-              <span className="tabular font-medium">{option.label}</span>
-              <span className="truncate text-xs text-ink-muted">
+            <span className="flex w-full items-baseline gap-3">
+              <span className="tabular shrink-0 font-medium">{option.label}</span>
+              <span className="flex-1 text-right text-xs text-ink-muted">
                 {countryOf(option.value)}
               </span>
             </span>
           )}
-          comboboxProps={{ width: 300, position: "bottom-start" }}
+          comboboxProps={{ width: 320, position: "bottom-start" }}
         />
 
         <TextInput
