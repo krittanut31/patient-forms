@@ -148,6 +148,33 @@ scrolling, sized in `dvh` rather than `vh`. With `vh` the mobile address bar
 makes the viewport taller than what is actually visible, and the bottom of the
 list ends up under the browser chrome.
 
+### Two languages
+
+English and Thai, chosen by cookie rather than by a path segment, falling back
+to `Accept-Language` on a first visit. Neither audience types a URL — patients
+scan a QR code, staff use a bookmark — so `/th` would have cost a redirect on
+every visit and bought nothing. The trade is that a link cannot carry a
+language, and that pages render on demand instead of being prerendered, because
+reading a cookie makes a response request-specific.
+
+Country, nationality and language names are not in the message files.
+`Intl.DisplayNames` already knows all 242 regions in both languages, and it will
+still be right after the next border change. That pushed a decision the other
+way round too: those fields now store an ISO code on the wire rather than a
+word, so a form filled in Thai reads correctly on an English staff screen, and
+the staff member's language decides what they see — not the patient's.
+
+The same reasoning removed the one piece of English the server was generating.
+`SessionSummary.displayName` used to arrive as `"New patient #A3F2"`; the server
+has no idea what language the reader picked, so it now sends `null` and the
+client writes the sentence around `sessionCode()`.
+
+One string is deliberately left untranslated: the elapsed-time column
+(`8s`, `4m 12s`). It is unit letters beside digits in a narrow column read from
+two metres, not prose, and "4 นาที 12 วินาที" is neither shorter nor faster to
+read. The spelled-out version behind it, which screen readers and the tooltip
+get, is translated.
+
 ### Copy
 
 Buttons say what happens — "Send my details to reception", not "Submit". Empty

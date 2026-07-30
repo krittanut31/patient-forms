@@ -1,13 +1,8 @@
-import { Badge } from "@mantine/core";
-import type { SessionStatus } from "@patient-forms/shared";
+"use client";
 
-export const STATUS_LABEL: Record<SessionStatus, string> = {
-  new: "New",
-  typing: "Typing",
-  idle: "Idle",
-  submitted: "Submitted",
-  disconnected: "Disconnected",
-};
+import { Badge } from "@mantine/core";
+import { useTranslations } from "next-intl";
+import type { SessionStatus } from "@patient-forms/shared";
 
 /**
  * Weight is inverted from the usual badge treatment: only `idle` is filled.
@@ -89,6 +84,8 @@ function Glyph({ status }: { status: SessionStatus }) {
  * look like the other four.
  */
 export function StatusChip({ status }: { status: SessionStatus }) {
+  const t = useTranslations("staff.status");
+
   return (
     <Badge
       variant="outline"
@@ -99,7 +96,7 @@ export function StatusChip({ status }: { status: SessionStatus }) {
         label: "text-xs font-semibold",
       }}
     >
-      {STATUS_LABEL[status]}
+      {t(status)}
     </Badge>
   );
 }

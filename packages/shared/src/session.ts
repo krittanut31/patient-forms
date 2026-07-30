@@ -34,8 +34,16 @@ export type FieldPatchInput = Pick<FieldPatch, "field" | "value" | "isValid">;
 /** The small object the lobby list renders. Throttled, and deliberately flat. */
 export type SessionSummary = {
   sessionId: string;
-  /** Real name once first and last name arrive, fallback label before that. */
-  displayName: string;
+  /**
+   * The patient's name once first and last have both arrived, `null` before
+   * that.
+   *
+   * Deliberately not a ready-made "New patient #A3F2" string: the server has no
+   * idea what language the staff member reading the list has chosen, so it
+   * sends the fact and lets the client write the sentence. `sessionCode` gives
+   * the client the same four characters to put in it.
+   */
+  displayName: string | null;
   status: SessionStatus;
   filledCount: number;
   totalFields: number;
@@ -62,14 +70,13 @@ export type SessionSnapshot = {
 };
 
 /**
- * Stable label shown before the patient has entered a name. Derived from the
- * session id so it does not change as the row re-renders.
+ * Four characters standing in for a patient who has not typed a name yet.
+ * Derived from the session id so it does not change as the row re-renders.
  */
-export function fallbackDisplayName(sessionId: string): string {
-  const suffix = sessionId
+export function sessionCode(sessionId: string): string {
+  return sessionId
     .replace(/[^a-fA-F0-9]/g, "")
     .slice(-4)
     .toUpperCase()
     .padStart(4, "0");
-  return `New patient #${suffix}`;
 }

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { StaffShell } from "@/components/staff/StaffShell";
 import { StaffSocketProvider } from "@/components/staff/StaffSocketProvider";
 
-export const metadata: Metadata = {
-  title: "Reception — live intake",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("staff");
+  return { title: t("title") };
+}
 
 /**
  * The socket provider lives here, not in the pages.
