@@ -262,6 +262,12 @@ Deployed URLs: _not deployed yet._
   Thailand first. Both halves are stored as one string (`+66812345678`), so the
   event contract still has one entry per phone and the progress count stays
   honest.
+- **A real queue number** — the brief's fallback label is four characters of the
+  session id, which names a row but is not something a patient can read out or a
+  nurse can call across a waiting room. `SessionSummary.ticket` is a four-digit
+  sequence instead, drawn server-side, shown to the patient above their form and
+  on the confirmation screen, and kept beside the name on both staff screens even
+  after the name arrives. See `docs/development-plan.md`.
 - **Light only** — the dark palette was removed rather than left to the OS. See
   the reasoning in `docs/development-plan.md`.
 - **English and Thai** — see Languages above. The brief asks for a preferred-

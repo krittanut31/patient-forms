@@ -5,6 +5,7 @@ import { Button, Stack } from "@mantine/core";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import { formatTicket } from "@patient-forms/shared";
 import type { PatientForm, PatientFormField } from "@patient-forms/shared";
 import { DEFAULT_NATIONALITY } from "@/lib/countries";
 import { FIELD_CONFIGS } from "@/lib/field-config";
@@ -81,7 +82,7 @@ export function IntakeForm() {
     sendAll(getValues() as PatientForm);
   }, [resyncToken, sendAll, getValues]);
 
-  if (submitted) return <SubmittedNotice />;
+  if (submitted) return <SubmittedNotice ticket={session.ticket} />;
 
   return (
     <form
@@ -92,6 +93,24 @@ export function IntakeForm() {
       })}
       className="flex flex-col gap-6"
     >
+      {/* The number goes up while they are still filling in, not only on the
+          confirmation screen: staff watching a half-filled form need something
+          to call across the waiting room, and that only works if the patient
+          already has it in front of them. */}
+      <div aria-live="polite">
+        {session.ticket !== null && (
+          <div className="rounded-panel border border-line bg-surface-sub px-4 py-3">
+            <p className="flex items-baseline gap-2.5">
+              <span className="text-sm text-ink-muted">{t("ticketLabel")}</span>
+              <span className="tabular text-xl font-semibold text-ink">
+                {formatTicket(session.ticket)}
+              </span>
+            </p>
+            <p className="mt-0.5 text-sm text-ink-muted">{t("ticketHint")}</p>
+          </div>
+        )}
+      </div>
+
       <ConnectionNotice state={session.connection} />
 
       {/* Single column at every width — a two-column form on a phone is how

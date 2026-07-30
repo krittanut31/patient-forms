@@ -16,6 +16,12 @@ import type {
  */
 export type SessionInitResult = {
   sessionId: string;
+  /**
+   * The number to show the patient. Comes back on every init, not just the
+   * first: a refresh must show the same number the patient may already have
+   * quoted to staff, and a session the server no longer has gets a new one.
+   */
+  ticket: number;
   fields: SessionSnapshot["fields"];
 };
 

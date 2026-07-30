@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { sessionCode } from "@patient-forms/shared";
+import { formatTicket } from "@patient-forms/shared";
 import type { SessionSummary } from "@patient-forms/shared";
 import { elapsedParts, formatElapsed } from "@/lib/relative-time";
 import { RAIL, StatusChip } from "./StatusChip";
@@ -17,9 +17,7 @@ export function SessionRow({ session, now, selected }: Props) {
   const t = useTranslations("staff");
   const alert = session.status === "idle";
 
-  const name =
-    session.displayName ??
-    t("newPatient", { code: sessionCode(session.sessionId) });
+  const name = session.displayName ?? t("newPatient");
 
   /** Each status is waiting on a different thing, so each says what it is waiting on. */
   const activity = (): string => {
@@ -62,7 +60,18 @@ export function SessionRow({ session, now, selected }: Props) {
         <span className={`h-full ${RAIL[session.status]}`} aria-hidden />
 
         <span className="flex min-w-0 flex-col gap-0.5 py-2.5">
-          <span className="truncate text-base font-medium text-ink">{name}</span>
+          {/* The ticket stays visible after the name arrives. It is what a nurse
+              says out loud, and the patient can only answer to it if the two
+              screens agree on which number belongs to which name. */}
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span className="tabular shrink-0 text-sm font-medium text-ink-muted">
+              <span className="sr-only">{t("ticketLabel")} </span>
+              {formatTicket(session.ticket)}
+            </span>
+            <span className="truncate text-base font-medium text-ink">
+              {name}
+            </span>
+          </span>
           <span className="tabular flex flex-wrap gap-x-2.5 gap-y-0.5 text-xs text-ink-muted">
             <span>
               {t("progress", {

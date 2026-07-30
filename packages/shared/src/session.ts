@@ -35,13 +35,21 @@ export type FieldPatchInput = Pick<FieldPatch, "field" | "value" | "isValid">;
 export type SessionSummary = {
   sessionId: string;
   /**
+   * The number the patient reads off their own screen and says out loud.
+   *
+   * Issued once when the session is created and never changed, so it is safe
+   * for a patient to write down or repeat to staff. Note that it is not the row
+   * position in the staff list — that reorders every time somebody's status
+   * changes, which would point a nurse at the wrong chair.
+   */
+  ticket: number;
+  /**
    * The patient's name once first and last have both arrived, `null` before
    * that.
    *
-   * Deliberately not a ready-made "New patient #A3F2" string: the server has no
-   * idea what language the staff member reading the list has chosen, so it
-   * sends the fact and lets the client write the sentence. `sessionCode` gives
-   * the client the same four characters to put in it.
+   * Deliberately not a ready-made "New patient" string: the server has no idea
+   * what language the staff member reading the list has chosen, so it sends the
+   * fact and lets the client write the sentence.
    */
   displayName: string | null;
   status: SessionStatus;
@@ -70,13 +78,20 @@ export type SessionSnapshot = {
 };
 
 /**
- * Four characters standing in for a patient who has not typed a name yet.
- * Derived from the session id so it does not change as the row re-renders.
+ * Ticket numbers wrap here rather than growing a fifth digit.
+ *
+ * Safe because an abandoned session is reaped after 5 minutes and a submitted
+ * one after 10, so reaching the same number twice would take ten thousand
+ * patients inside ten minutes. Keeping the printed form four digits forever is
+ * worth more than counting past it.
  */
-export function sessionCode(sessionId: string): string {
-  return sessionId
-    .replace(/[^a-fA-F0-9]/g, "")
-    .slice(-4)
-    .toUpperCase()
-    .padStart(4, "0");
+export const MAX_TICKET = 9999;
+
+/**
+ * How a ticket is written wherever a person reads it — on the patient's own
+ * screen and in the staff list. One function, both apps, so the two can never
+ * show the same patient a differently formatted number.
+ */
+export function formatTicket(ticket: number): string {
+  return `#${String(ticket).padStart(4, "0")}`;
 }

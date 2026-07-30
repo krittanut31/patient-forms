@@ -17,10 +17,10 @@
     "title": "ลงทะเบียนที่เคาน์เตอร์",
     "intro": "กรอกระหว่างรอได้เลย ไม่ต้องกรอกให้เสร็จก่อนถูกเรียก",
     "submit": "ส่งข้อมูลให้เคาน์เตอร์",
+    "ticketLabel": "หมายเลขของคุณ",
+    "ticketHint": "เจ้าหน้าที่เห็นหมายเลขนี้ แจ้งหมายเลขนี้ได้เลยหากต้องการให้ช่วยก่อนกรอกเสร็จ",
     "privacy": "เจ้าหน้าที่มองเห็นแบบฟอร์มนี้ขณะที่คุณกรอก เพื่อจะได้เข้ามาช่วยหากคุณติดขัด ข้อมูลไม่ถูกส่งออกนอกโรงพยาบาล",
     "optional": "ไม่บังคับ",
-    "chooseOne": "เลือกหนึ่งข้อ",
-    "datePlaceholder": "เช่น 4 มี.ค. 1975",
     "nationalityNoMatch": "ไม่พบรายการนี้ — แจ้งเจ้าหน้าที่เพื่อเพิ่มให้",
     "countryCodeFor": "รหัสประเทศของ{field}",
     "countryNoMatch": "ไม่พบประเทศที่ค้นหา",
@@ -37,26 +37,47 @@
   },
 
   "fields": {
-    "firstName": { "label": "ชื่อจริง" },
-    "middleName": { "label": "ชื่อกลาง" },
-    "lastName": { "label": "นามสกุล" },
-    "dateOfBirth": { "label": "วันเกิด" },
-    "gender": { "label": "เพศ" },
-    "phone": { "label": "เบอร์โทรศัพท์", "hint": "เช่น 081 234 5678" },
-    "email": { "label": "อีเมล" },
-    "address": { "label": "ที่อยู่" },
+    "firstName": { "label": "ชื่อจริง", "placeholder": "เช่น สมชาย" },
+    "middleName": {
+      "label": "ชื่อกลาง",
+      "placeholder": "ไม่มีให้เว้นว่างไว้"
+    },
+    "lastName": { "label": "นามสกุล", "placeholder": "เช่น ประเสริฐ" },
+    "dateOfBirth": { "label": "วันเกิด", "placeholder": "เช่น 4 มี.ค. 1975" },
+    "gender": { "label": "เพศ", "placeholder": "เลือกหนึ่งข้อ" },
+    "phone": {
+      "label": "เบอร์โทรศัพท์",
+      "hint": "เช่น 081 234 5678",
+      "placeholder": "081 234 5678"
+    },
+    "email": { "label": "อีเมล", "placeholder": "เช่น somchai@email.com" },
+    "address": {
+      "label": "ที่อยู่",
+      "placeholder": "บ้านเลขที่ ถนน ตำบล/แขวง อำเภอ/เขต จังหวัด รหัสไปรษณีย์"
+    },
     "preferredLanguage": {
       "label": "ภาษาที่ต้องการใช้",
-      "hint": "ภาษาที่คุณอยากให้เจ้าหน้าที่ใช้พูดคุยด้วย"
+      "hint": "ภาษาที่คุณอยากให้เจ้าหน้าที่ใช้พูดคุยด้วย",
+      "placeholder": "เลือกหนึ่งข้อ"
     },
-    "nationality": { "label": "สัญชาติ" },
-    "emergencyContactName": { "label": "ชื่อผู้ติดต่อฉุกเฉิน" },
-    "emergencyContactNumber": { "label": "เบอร์ผู้ติดต่อฉุกเฉิน" },
+    "nationality": { "label": "สัญชาติ", "placeholder": "พิมพ์ชื่อประเทศ" },
+    "emergencyContactName": {
+      "label": "ชื่อผู้ติดต่อฉุกเฉิน",
+      "placeholder": "เช่น มาลี ประเสริฐ"
+    },
+    "emergencyContactNumber": {
+      "label": "เบอร์ผู้ติดต่อฉุกเฉิน",
+      "placeholder": "081 234 5678"
+    },
     "emergencyContactRelationship": {
       "label": "ความสัมพันธ์กับผู้ติดต่อฉุกเฉิน",
-      "hint": "เช่น ลูกสาว สามี เพื่อนบ้าน"
+      "hint": "เช่น ลูกสาว สามี เพื่อนบ้าน",
+      "placeholder": "เช่น ลูกสาว"
     },
-    "religion": { "label": "ศาสนา" }
+    "religion": {
+      "label": "ศาสนา",
+      "placeholder": "เลือกหนึ่งข้อ หรือเว้นว่างไว้"
+    }
   },
 
   "options": {
@@ -109,7 +130,8 @@
     "submittedGroup": "ส่งแล้ว · แสดงต่ออีก {minutes} นาที",
     "listReconnecting": "กำลังเชื่อมต่อใหม่ รายการนี้อาจไม่เป็นปัจจุบัน",
     "listOffline": "ขาดการเชื่อมต่อ รายการนี้หยุดนิ่งและไม่อัปเดต",
-    "newPatient": "ผู้ป่วยใหม่ #{code}",
+    "newPatient": "ผู้ป่วยใหม่",
+    "ticketLabel": "หมายเลข",
     "progress": "กรอกแล้ว {filled} จาก {total} ช่อง",
     "needFixing": "{count, plural, other {ต้องแก้ # ช่อง}}",
     "chooseHeading": "เลือกผู้ป่วยเพื่อดูแบบฟอร์มของเขา",

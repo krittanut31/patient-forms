@@ -28,18 +28,30 @@ export function registerHandlers(
         if (rejoined) {
           socket.data.sessionId = rejoined.sessionId;
           lobby.markChanged(rejoined.sessionId);
-          ack({ sessionId: rejoined.sessionId, fields: rejoined.fields });
+          // The ticket comes back unchanged. A patient who refreshed must not be
+          // told a new number — they may already have quoted the old one.
+          ack({
+            sessionId: rejoined.sessionId,
+            ticket: rejoined.ticket,
+            fields: rejoined.fields,
+          });
           return;
         }
       }
 
       // Any id offered for a session we do not have is discarded rather than
       // trusted — the server names sessions, clients only echo the name back.
-      const record = createSession(randomUUID(), socket.id, Date.now());
+      // The ticket is drawn here and nowhere else, so one session is one number.
+      const ticket = await store.nextTicket();
+      const record = createSession(randomUUID(), ticket, socket.id, Date.now());
       await store.save(record);
       socket.data.sessionId = record.sessionId;
       lobby.markChanged(record.sessionId);
-      ack({ sessionId: record.sessionId, fields: record.fields });
+      ack({
+        sessionId: record.sessionId,
+        ticket: record.ticket,
+        fields: record.fields,
+      });
     });
 
     socket.on("session:patch", async ({ field, value, isValid }) => {

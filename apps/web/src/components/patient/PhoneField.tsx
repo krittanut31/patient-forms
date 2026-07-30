@@ -28,6 +28,8 @@ type Props = {
   /** Plain text version of the label, for the select's own aria-label. */
   labelText: string;
   hint?: string;
+  /** Shown only under the default dialing code — see the input below. */
+  placeholder?: string;
   /** The stored value, `+66812345678`. */
   value: string;
   error?: string;
@@ -51,6 +53,7 @@ export function PhoneField({
   label,
   labelText,
   hint,
+  placeholder,
   value,
   error,
   describedBy,
@@ -151,7 +154,10 @@ export function PhoneField({
           inputMode="tel"
           autoComplete={config.autoComplete}
           aria-describedby={describedBy}
-          placeholder={activeCode === DEFAULT_DIAL_CODE ? "081 234 5678" : undefined}
+          // Only while the code is Thai. The example is a Thai mobile number,
+          // and showing it beside +81 would be telling somebody the wrong shape
+          // for their own country's numbers.
+          placeholder={activeCode === DEFAULT_DIAL_CODE ? placeholder : undefined}
           classNames={{ input: "tabular" }}
         />
       </Group>
