@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@mantine/core";
 import { useLocale, useTranslations } from "next-intl";
-import { sessionCode } from "@patient-forms/shared";
+import { formatTicket } from "@patient-forms/shared";
 import type {
   FieldPatch,
   FieldState,
@@ -118,8 +118,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     ? tFields(`${fieldConfig(focusedField).field}.label`)
     : null;
 
-  const name =
-    summary?.displayName ?? t("newPatient", { code: sessionCode(sessionId) });
+  const name = summary?.displayName ?? t("newPatient");
 
   if (!summary && snapshot === null && connection === "online") {
     return (
@@ -161,8 +160,18 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
           </Button>
 
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-lg font-semibold text-ink">
-              {summary ? name : tDetail("loading")}
+            <h2 className="flex min-w-0 items-baseline gap-2 text-lg font-semibold text-ink">
+              {summary ? (
+                <>
+                  <span className="tabular shrink-0 text-base text-ink-muted">
+                    <span className="sr-only">{t("ticketLabel")} </span>
+                    {formatTicket(summary.ticket)}
+                  </span>
+                  <span className="truncate">{name}</span>
+                </>
+              ) : (
+                tDetail("loading")
+              )}
             </h2>
             {summary && (
               <p className="tabular mt-0.5 flex flex-wrap gap-x-2.5 text-xs text-ink-muted">
