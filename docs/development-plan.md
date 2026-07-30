@@ -167,13 +167,51 @@ the staff member's language decides what they see — not the patient's.
 The same reasoning removed the one piece of English the server was generating.
 `SessionSummary.displayName` used to arrive as `"New patient #A3F2"`; the server
 has no idea what language the reader picked, so it now sends `null` and the
-client writes the sentence around `sessionCode()`.
+client writes the sentence. The number that used to be inside that sentence is a
+field of its own — see below.
 
 One string is deliberately left untranslated: the elapsed-time column
 (`8s`, `4m 12s`). It is unit letters beside digits in a narrow column read from
 two metres, not prose, and "4 นาที 12 วินาที" is neither shorter nor faster to
 read. The spelled-out version behind it, which screen readers and the tooltip
 get, is translated.
+
+### The queue number
+
+The brief's fallback label, `New patient #A3F2`, is four hex characters of the
+session id. It identifies a row on the staff screen, which is all the brief asks
+of it — but it is not something a patient can be asked to read out, and it is not
+something a nurse can say across a waiting room.
+
+So the number is a real one. `SessionSummary.ticket` is a four-digit sequence,
+drawn once when the session is created, and both screens print it through the
+same `formatTicket()` — the patient sees `#0007` above the form and again, larger,
+on the confirmation screen; the staff list and detail header show it beside the
+name. That closes the loop the brief leaves open: staff can see somebody has been
+stuck on the address field for four minutes and call the right person, and the
+patient recognises the number when they do.
+
+Three consequences worth stating:
+
+- **It survives a refresh.** `session:init` returns the ticket on every call, not
+  only the first. A patient who reloads has possibly already quoted their number,
+  so being issued a second one would be worse than useless.
+- **It stays visible after the name arrives.** Otherwise the number a patient is
+  holding disappears from the staff screen at the exact moment staff learn who
+  they are, and the two screens no longer agree on anything.
+- **It is not the row position.** The list re-sorts every time somebody's status
+  changes; a number that moved with the row would point a nurse at the wrong
+  chair.
+
+Drawing it is `SessionStore.nextTicket()` rather than a module counter, for the
+same reason the sessions are in the store: two server processes behind one Redis
+have to draw from one sequence, or two patients in the same waiting room are both
+told they are `#0007`. Redis answers that with `INCR`, which is why the method
+returns the number instead of taking a record to stamp. It wraps at `9999`
+because an abandoned session is reaped after 5 minutes and a submitted one after
+10 — reaching the same number twice would take ten thousand patients inside ten
+minutes, and a number that stays four digits forever is worth more than counting
+past it.
 
 ### Copy
 
