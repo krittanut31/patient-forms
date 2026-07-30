@@ -107,6 +107,30 @@ put one in a private window. The session id lives in `sessionStorage`, which is
 shared across tabs of the same profile, so two normal tabs would join the same
 session instead of showing you two patients.
 
+## Languages
+
+English and Thai, switchable from a control on every screen.
+
+The language is chosen by cookie (`NEXT_LOCALE`), not by a path segment. Both
+audiences arrive without typing a URL — patients from a QR code at the counter,
+staff from a bookmark — so a `/th` prefix would have bought a redirect on every
+visit and nothing else. A first visit with no cookie falls back to
+`Accept-Language`, so a Thai phone gets a Thai form without touching the
+switcher.
+
+Two consequences worth knowing:
+
+- **A link cannot carry a language.** Sending someone `/patient` sends them to
+  whichever language their own cookie says.
+- **Pages render on demand rather than being prerendered.** Reading a cookie is
+  what makes a response request-specific; there is no build-time HTML to serve.
+
+Copy lives in `apps/web/messages/en.json` and `th.json`. Country, nationality
+and language names are not in there — they come from `Intl.DisplayNames`, which
+already knows all 242 regions in both languages and stays right after a border
+changes. Those fields store an ISO code on the wire (`"TH"`, not `"Thai"`), so a
+form filled in Thai still reads correctly on an English staff screen.
+
 ## Environment variables
 
 ### `apps/web`
@@ -240,6 +264,9 @@ Deployed URLs: _not deployed yet._
   honest.
 - **Light only** — the dark palette was removed rather than left to the OS. See
   the reasoning in `docs/development-plan.md`.
+- **English and Thai** — see Languages above. The brief asks for a preferred-
+  language field, not for a translated interface; a form an elderly Thai patient
+  cannot read is not really an intake form.
 
 ## Stack notes
 

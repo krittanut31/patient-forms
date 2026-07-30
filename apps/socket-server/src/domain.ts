@@ -1,6 +1,5 @@
 import {
   ABANDONED_CLEANUP_MS,
-  fallbackDisplayName,
   IDLE_AFTER_MS,
   SUBMITTED_RETENTION_MS,
   TOTAL_FIELDS,
@@ -56,11 +55,11 @@ export function deriveStatus(record: SessionRecord, now: number): SessionStatus 
   return "typing";
 }
 
-export function displayNameFor(record: SessionRecord): string {
+/** `null` until both halves of a name exist — the client writes the stand-in. */
+export function displayNameFor(record: SessionRecord): string | null {
   const first = record.fields.firstName?.value.trim() ?? "";
   const last = record.fields.lastName?.value.trim() ?? "";
-  if (first && last) return `${first} ${last}`;
-  return fallbackDisplayName(record.sessionId);
+  return first && last ? `${first} ${last}` : null;
 }
 
 export function toSummary(record: SessionRecord, now: number): SessionSummary {

@@ -2,6 +2,9 @@
 
 import type { ReactNode } from "react";
 import { MantineProvider } from "@mantine/core";
+import { DatesProvider } from "@mantine/dates";
+import { useLocale } from "next-intl";
+import "dayjs/locale/th";
 import { cssVariablesResolver, theme } from "@/lib/mantine-theme";
 
 /**
@@ -16,13 +19,18 @@ import { cssVariablesResolver, theme } from "@/lib/mantine-theme";
  * on the palette in globals.css.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
+  const locale = useLocale();
+
   return (
     <MantineProvider
       theme={theme}
       cssVariablesResolver={cssVariablesResolver}
       forceColorScheme="light"
     >
-      {children}
+      {/* Mantine's calendar runs on dayjs, which has its own locale registry —
+          without this the date of birth picker keeps English month names on an
+          otherwise Thai form. */}
+      <DatesProvider settings={{ locale }}>{children}</DatesProvider>
     </MantineProvider>
   );
 }

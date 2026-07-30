@@ -6,13 +6,17 @@ import type { FieldConfig } from "@/lib/field-config";
  * are required, so flagging those instead would put a marker on most of the
  * form and stop meaning anything.
  */
-export function fieldLabel(config: FieldConfig): ReactNode {
-  if (config.required) return config.label;
+export function fieldLabel(
+  config: FieldConfig,
+  label: string,
+  optional: string,
+): ReactNode {
+  if (config.required) return label;
 
   return (
     <span className="flex items-baseline gap-2">
-      {config.label}
-      <span className="text-xs font-normal text-ink-muted">Optional</span>
+      {label}
+      <span className="text-xs font-normal text-ink-muted">{optional}</span>
     </span>
   );
 }

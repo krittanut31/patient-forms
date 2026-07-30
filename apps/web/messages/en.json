@@ -1,0 +1,162 @@
+{
+  "app": {
+    "title": "Outpatient intake",
+    "description": "Patient registration for the outpatient department, with a live view for reception staff.",
+    "languageLabel": "Language"
+  },
+
+  "home": {
+    "heading": "Outpatient intake",
+    "patientTitle": "Patient",
+    "patientBlurb": "Fill in your details while you wait",
+    "staffTitle": "Staff",
+    "staffBlurb": "See who is filling in a form right now"
+  },
+
+  "patient": {
+    "title": "Register at reception",
+    "intro": "Fill this in while you wait. You do not need to finish it before someone calls you.",
+    "submit": "Send my details to reception",
+    "privacy": "A member of staff can see this form as you fill it in, so they can help if you get stuck. Nothing is shared outside the hospital.",
+    "optional": "Optional",
+    "chooseOne": "Choose one",
+    "datePlaceholder": "e.g. 4 Mar 1975",
+    "nationalityNoMatch": "No match — tell reception and they will add it",
+    "countryCodeFor": "{field} country code",
+    "countryNoMatch": "No country by that name",
+    "submitted": {
+      "heading": "Your details are with reception",
+      "body": "Please take a seat. A member of staff will call your name.",
+      "correction": "If something was wrong, tell the person at the counter — they can see what you sent and correct it for you."
+    },
+    "connection": {
+      "reconnecting": "Reconnecting to reception",
+      "offline": "You are offline",
+      "body": "Keep filling in the form — what you have typed is safe and will be sent as soon as the connection is back."
+    }
+  },
+
+  "fields": {
+    "firstName": { "label": "First name" },
+    "middleName": { "label": "Middle name" },
+    "lastName": { "label": "Last name" },
+    "dateOfBirth": { "label": "Date of birth" },
+    "gender": { "label": "Gender" },
+    "phone": { "label": "Phone number", "hint": "For example 081 234 5678" },
+    "email": { "label": "Email" },
+    "address": { "label": "Address" },
+    "preferredLanguage": {
+      "label": "Preferred language",
+      "hint": "The language you would like staff to speak with you"
+    },
+    "nationality": { "label": "Nationality" },
+    "emergencyContactName": { "label": "Emergency contact name" },
+    "emergencyContactNumber": { "label": "Emergency contact number" },
+    "emergencyContactRelationship": {
+      "label": "Emergency contact relationship",
+      "hint": "For example: daughter, husband, neighbour"
+    },
+    "religion": { "label": "Religion" }
+  },
+
+  "options": {
+    "gender": {
+      "female": "Female",
+      "male": "Male",
+      "other": "Other",
+      "undisclosed": "Prefer not to say"
+    },
+    "language": {
+      "other": "Another language"
+    },
+    "religion": {
+      "buddhist": "Buddhist",
+      "muslim": "Muslim",
+      "christian": "Christian",
+      "hindu": "Hindu",
+      "sikh": "Sikh",
+      "none": "None",
+      "other": "Other",
+      "undisclosed": "Prefer not to say"
+    }
+  },
+
+  "validation": {
+    "required": "{field} is required",
+    "nameCharset": "{field} cannot contain numbers or symbols",
+    "realDate": "Use a real date",
+    "futureDate": "Date of birth cannot be in the future",
+    "tooLongAgo": "Check the year — that is over {years} years ago",
+    "phone": "Check the phone number for that country",
+    "email": "Please enter valid email"
+  },
+
+  "staff": {
+    "title": "Reception — live intake",
+    "listHeading": "Filling in now",
+    "counts": "<filling></filling> filling in · <stuck></stuck> need help",
+    "stuckAnnouncement": "{count, plural, =0 {No patients need help.} one {# patient needs help.} other {# patients need help.}}",
+    "sortBy": "Sort by",
+    "sortLabel": "Sort the list",
+    "sort": {
+      "needs-help": "Who needs help",
+      "recent": "Most recent activity",
+      "progress": "Least progress",
+      "name": "Name"
+    },
+    "emptyHeading": "Nobody is filling in a form",
+    "emptyBody": "Sessions appear here the moment a patient opens the form. Hand out the counter tablet or point them at the QR code.",
+    "submittedGroup": "Submitted · kept for {minutes} minutes",
+    "listReconnecting": "Reconnecting. This list may be out of date.",
+    "listOffline": "Disconnected. This list is frozen and not updating.",
+    "newPatient": "New patient #{code}",
+    "progress": "{filled} of {total} fields",
+    "needFixing": "{count, plural, one {# needs fixing} other {# need fixing}}",
+    "chooseHeading": "Choose a patient to watch their form",
+    "chooseBody": "Anyone marked <idle>Idle</idle> has stopped partway through and may be stuck. Start there.",
+
+    "status": {
+      "new": "New",
+      "typing": "Typing",
+      "idle": "Idle",
+      "submitted": "Submitted",
+      "disconnected": "Disconnected"
+    },
+
+    "activity": {
+      "waiting": "waiting {elapsed}",
+      "activeNow": "active now",
+      "paused": "paused {elapsed}",
+      "stuck": "stuck {elapsed}",
+      "lostConnection": "lost connection {elapsed} ago",
+      "submitted": "submitted {elapsed} ago"
+    },
+
+    "detail": {
+      "loading": "Loading…",
+      "lastActivity": "last activity {elapsed} ago",
+      "focusedOn": "Currently on",
+      "notFocused": "Not on any field right now",
+      "hereNow": "· here now",
+      "empty": "Empty",
+      "back": "← List",
+      "backLong": "Back to the list",
+      "endedHeading": "This session has ended",
+      "endedBody": "It was submitted a while ago or the patient left without finishing.",
+      "announcement": "{name}, {status}.{focus}",
+      "announcementFocus": " On the {field} field."
+    },
+
+    "fieldState": {
+      "empty": "Empty",
+      "valid": "Filled in",
+      "invalid": "Not valid"
+    },
+
+    "elapsed": {
+      "seconds": "{count, plural, one {# second} other {# seconds}}",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "hours": "{count, plural, one {# hour} other {# hours}}"
+    }
+  }
+}

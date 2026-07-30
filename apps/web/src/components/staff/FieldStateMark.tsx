@@ -1,9 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { FieldStateKind } from "@/lib/field-state";
 
-const META: Record<FieldStateKind, { label: string; className: string }> = {
-  empty: { label: "Empty", className: "text-ink-muted" },
-  valid: { label: "Filled in", className: "text-status-typing" },
-  invalid: { label: "Not valid", className: "text-danger" },
+const TINT: Record<FieldStateKind, string> = {
+  empty: "text-ink-muted",
+  valid: "text-status-typing",
+  invalid: "text-danger",
 };
 
 /**
@@ -14,10 +17,11 @@ const META: Record<FieldStateKind, { label: string; className: string }> = {
  * outline does not. The label goes to screen readers either way.
  */
 export function FieldStateMark({ state }: { state: FieldStateKind }) {
-  const { label, className } = META[state];
+  const t = useTranslations("staff.fieldState");
+  const label = t(state);
 
   return (
-    <span className={`inline-flex ${className}`} title={label}>
+    <span className={`inline-flex ${TINT[state]}`} title={label}>
       <span className="sr-only">{label}</span>
       <svg
         viewBox="0 0 20 20"

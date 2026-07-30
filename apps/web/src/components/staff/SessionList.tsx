@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Alert, NativeSelect } from "@mantine/core";
+import { useTranslations } from "next-intl";
 import { SUBMITTED_RETENTION_MS } from "@patient-forms/shared";
 import {
   countAttention,
-  SORT_OPTIONS,
+  SORT_KEYS,
   sortSessions,
   splitBySubmitted,
 } from "@/lib/session-sort";
@@ -20,6 +21,7 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
   const { sessions, connection } = useStaff();
   const [sort, setSort] = useState<SortKey>("needs-help");
   const now = useNow();
+  const t = useTranslations("staff");
 
   const { active, submitted } = useMemo(() => {
     const ordered = sortSessions(sessions, sort);
@@ -28,46 +30,61 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
 
   const counts = countAttention(sessions);
 
+  const sortOptions = useMemo(
+    () => SORT_KEYS.map((key) => ({ value: key, label: t(`sort.${key}`) })),
+    [t],
+  );
+
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b border-line bg-surface-sub px-4 py-3">
+      {/* `pl`/`pr` rather than `px`, so the clearance for the pinned language
+          switcher does not depend on which utility Tailwind emits last. The
+          gap is only needed while the list is full width — above `lg` the
+          switcher sits over the detail pane instead. */}
+      <header className="border-b border-line bg-surface-sub py-3 pl-4 pr-28 lg:pr-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h1 className="text-base font-semibold text-ink">Filling in now</h1>
+          <h1 className="text-base font-semibold text-ink">
+            {t("listHeading")}
+          </h1>
+          {/* The two numbers carry the weight, not the words around them, and
+              "need help" turns amber only when there is somebody in it. */}
           <p className="tabular text-xs text-ink-muted">
-            <span className="font-semibold text-ink">{counts.filling}</span>{" "}
-            filling in ·{" "}
-            <span
-              className={
-                counts.stuck > 0
-                  ? "font-semibold text-status-idle"
-                  : "font-semibold text-ink"
-              }
-            >
-              {counts.stuck}
-            </span>{" "}
-            need help
+            {t.rich("counts", {
+              filling: () => (
+                <span className="font-semibold text-ink">{counts.filling}</span>
+              ),
+              stuck: () => (
+                <span
+                  className={
+                    counts.stuck > 0
+                      ? "font-semibold text-status-idle"
+                      : "font-semibold text-ink"
+                  }
+                >
+                  {counts.stuck}
+                </span>
+              ),
+            })}
           </p>
         </div>
 
         {/* Announced rather than only coloured, so the count reaches someone
             who is not looking at this panel. */}
         <p aria-live="polite" className="sr-only">
-          {counts.stuck === 0
-            ? "No patients need help."
-            : `${counts.stuck} patient${counts.stuck === 1 ? "" : "s"} need help.`}
+          {t("stuckAnnouncement", { count: counts.stuck })}
         </p>
 
-        <div className="mt-2.5 flex items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-2">
           <label htmlFor="sort" className="text-xs text-ink-muted">
-            Sort by
+            {t("sortBy")}
           </label>
           <NativeSelect
             id="sort"
             size="xs"
             value={sort}
             onChange={(event) => setSort(event.currentTarget.value as SortKey)}
-            data={SORT_OPTIONS}
-            aria-label="Sort the list"
+            data={sortOptions}
+            aria-label={t("sortLabel")}
             styles={{ input: { minHeight: "2.75rem" } }}
           />
         </div>
@@ -84,18 +101,17 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
             }}
           >
             {connection === "connecting"
-              ? "Reconnecting. This list may be out of date."
-              : "Disconnected. This list is frozen and not updating."}
+              ? t("listReconnecting")
+              : t("listOffline")}
           </Alert>
         )}
 
         {active.length === 0 && submitted.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <p className="text-base font-medium text-ink">Nobody is filling in a form</p>
-            <p className="mt-1.5 text-sm text-ink-muted">
-              Sessions appear here the moment a patient opens the form. Hand out
-              the counter tablet or point them at the QR code.
+            <p className="text-base font-medium text-ink">
+              {t("emptyHeading")}
             </p>
+            <p className="mt-1.5 text-sm text-ink-muted">{t("emptyBody")}</p>
           </div>
         ) : (
           <>
@@ -115,7 +131,7 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
                 {/* Kept visible rather than disappearing on submit: staff often
                     need the person who just finished, not the ones still going. */}
                 <h2 className="border-y border-line-soft bg-surface-sub px-4 py-1.5 font-mono text-2xs tracking-[0.1em] text-ink-muted uppercase">
-                  Submitted · kept for {RETENTION_MINUTES} minutes
+                  {t("submittedGroup", { minutes: RETENTION_MINUTES })}
                 </h2>
                 <ul>
                   {submitted.map((session) => (
