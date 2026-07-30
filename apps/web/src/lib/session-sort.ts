@@ -1,4 +1,4 @@
-import { sessionCode } from "@patient-forms/shared";
+import { formatTicket } from "@patient-forms/shared";
 import type { SessionStatus, SessionSummary } from "@patient-forms/shared";
 
 export type SortKey = "needs-help" | "name" | "progress" | "recent";
@@ -14,9 +14,9 @@ export const SORT_KEYS: SortKey[] = ["needs-help", "recent", "progress", "name"]
  * tablet or a patient who wandered off — and staff should see it before the
  * people who are getting on with it fine.
  */
-/** An unnamed session sorts under `~` + its code, which lands after any name. */
+/** An unnamed session sorts under `~` + its ticket, which lands after any name. */
 const nameKey = (session: SessionSummary): string =>
-  session.displayName ?? `~${sessionCode(session.sessionId)}`;
+  session.displayName ?? `~${formatTicket(session.ticket)}`;
 
 const URGENCY: Record<SessionStatus, number> = {
   idle: 0,
@@ -35,8 +35,8 @@ export function sortSessions(
   switch (key) {
     case "name":
       // Nobody has a name until two fields arrive, so the unnamed sort by their
-      // code — stable, and it keeps them together at one end of the list rather
-      // than scattered through it.
+      // ticket — which is also arrival order, and it keeps them together at one
+      // end of the list rather than scattered through it.
       return sorted.sort((a, b) =>
         nameKey(a).localeCompare(nameKey(b), undefined, {
           sensitivity: "base",

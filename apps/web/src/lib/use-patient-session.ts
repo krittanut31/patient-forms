@@ -21,6 +21,12 @@ export type PatientSession = {
   connection: ConnectionState;
   sessionId: string | null;
   /**
+   * The queue number to put in front of the patient, `null` until the first
+   * init lands. The server owns it, so a refresh or a reconnect shows the same
+   * number back — never a second one the patient has to re-read to staff.
+   */
+  ticket: number | null;
+  /**
    * Fields the server already held, handed over once. A refresh keeps the
    * session id but loses the form, so without this the patient comes back to an
    * empty form while staff still see what they typed.
@@ -49,6 +55,7 @@ export function usePatientSession(): PatientSession {
 
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [ticket, setTicket] = useState<number | null>(null);
   const [restored, setRestored] = useState<PatientSession["restored"]>(null);
   const [resyncToken, setResyncToken] = useState(0);
 
@@ -62,6 +69,7 @@ export function usePatientSession(): PatientSession {
       socket.emit("session:init", { sessionId: stored }, (result) => {
         window.sessionStorage.setItem(SESSION_KEY, result.sessionId);
         setSessionId(result.sessionId);
+        setTicket(result.ticket);
 
         if (initialisedRef.current) {
           setResyncToken((token) => token + 1);
@@ -161,6 +169,7 @@ export function usePatientSession(): PatientSession {
   return {
     connection,
     sessionId,
+    ticket,
     restored,
     resyncToken,
     patch,

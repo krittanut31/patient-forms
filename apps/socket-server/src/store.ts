@@ -1,3 +1,4 @@
+import { MAX_TICKET } from "@patient-forms/shared";
 import type {
   FieldState,
   PatientFormField,
@@ -7,6 +8,8 @@ import type {
 /** Everything the server knows about one patient's session. */
 export type SessionRecord = {
   sessionId: string;
+  /** Issued once by `nextTicket()` and never rewritten. */
+  ticket: number;
   fields: Partial<Record<PatientFormField, FieldState>>;
   focusedField: PatientFormField | null;
   startedAt: number;
@@ -29,6 +32,17 @@ export type SessionRecord = {
 export interface SessionStore {
   get(sessionId: string): Promise<SessionRecord | undefined>;
   list(): Promise<SessionRecord[]>;
+  /**
+   * The next ticket number to hand a patient.
+   *
+   * Lives behind this interface rather than in a module-level counter because it
+   * is durable state, same as the sessions: two server processes sharing a Redis
+   * would both have to draw from one sequence, or two patients in the same
+   * waiting room would be told they are both #0007. Redis answers this with
+   * `INCR`, which is why the signature returns the number rather than taking a
+   * record to stamp.
+   */
+  nextTicket(): Promise<number>;
   /** Creates or replaces outright. Only used when a session first appears. */
   save(record: SessionRecord): Promise<void>;
   /**
@@ -57,6 +71,22 @@ export interface SessionStore {
  */
 export class InMemorySessionStore implements SessionStore {
   readonly #records = new Map<string, SessionRecord>();
+
+  /**
+   * Counts up, never reuses, and wraps at `MAX_TICKET`.
+   *
+   * It restarts from 1 when the process does, which is the same trade the rest
+   * of this store makes — a restart loses the sessions too, so there is nobody
+   * left holding the old number except the patient looking at their own phone.
+   * They will be re-issued one on reconnect. A Redis `INCR` is what makes the
+   * sequence outlive a deploy.
+   */
+  #lastTicket = 0;
+
+  async nextTicket(): Promise<number> {
+    this.#lastTicket = (this.#lastTicket % MAX_TICKET) + 1;
+    return this.#lastTicket;
+  }
 
   async get(sessionId: string): Promise<SessionRecord | undefined> {
     const record = this.#records.get(sessionId);

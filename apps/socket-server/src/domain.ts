@@ -14,11 +14,13 @@ import type { SessionRecord } from "./store";
 
 export function createSession(
   sessionId: string,
+  ticket: number,
   socketId: string,
   now: number,
 ): SessionRecord {
   return {
     sessionId,
+    ticket,
     fields: {},
     focusedField: null,
     startedAt: now,
@@ -66,6 +68,7 @@ export function toSummary(record: SessionRecord, now: number): SessionSummary {
   const states = Object.values(record.fields);
   return {
     sessionId: record.sessionId,
+    ticket: record.ticket,
     displayName: displayNameFor(record),
     status: deriveStatus(record, now),
     // A malformed phone number is still a field the patient has filled in, so
