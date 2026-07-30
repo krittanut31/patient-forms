@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Stack, Title } from "@mantine/core";
 import { getTranslations } from "next-intl/server";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /**
  * A signpost, not a landing page. The two audiences arrive from different
@@ -13,12 +12,9 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-4 py-12">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Title order={1} className="text-xl font-semibold tracking-tight">
-          {t("heading")}
-        </Title>
-        <LanguageSwitcher />
-      </div>
+      <Title order={1} className="text-xl font-semibold tracking-tight">
+        {t("heading")}
+      </Title>
 
       <Stack gap="sm">
         <Link

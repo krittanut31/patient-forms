@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Alert, NativeSelect } from "@mantine/core";
 import { useTranslations } from "next-intl";
 import { SUBMITTED_RETENTION_MS } from "@patient-forms/shared";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   countAttention,
   SORT_KEYS,
@@ -38,7 +37,11 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b border-line bg-surface-sub px-4 py-3">
+      {/* `pl`/`pr` rather than `px`, so the clearance for the pinned language
+          switcher does not depend on which utility Tailwind emits last. The
+          gap is only needed while the list is full width — above `lg` the
+          switcher sits over the detail pane instead. */}
+      <header className="border-b border-line bg-surface-sub py-3 pl-4 pr-28 lg:pr-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h1 className="text-base font-semibold text-ink">
             {t("listHeading")}
@@ -84,9 +87,6 @@ export function SessionList({ selectedId }: { selectedId: string | null }) {
             aria-label={t("sortLabel")}
             styles={{ input: { minHeight: "2.75rem" } }}
           />
-          <span className="ml-auto">
-            <LanguageSwitcher />
-          </span>
         </div>
       </header>
 

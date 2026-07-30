@@ -145,7 +145,10 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
 
   return (
     <article className="flex h-full flex-col">
-      <header className="border-b border-line bg-surface-sub px-4 py-3">
+      {/* The status chip lives at the top right of this header, which is where
+          the pinned language switcher lands at every width — the detail fills
+          the screen on mobile and the right pane on desktop. */}
+      <header className="border-b border-line bg-surface-sub py-3 pl-4 pr-28">
         <div className="flex items-start gap-2">
           <Button
             component={Link}
