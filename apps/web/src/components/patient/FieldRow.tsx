@@ -62,6 +62,12 @@ export function FieldRow({
   const hint = config.hint ? tFields(`${config.field}.hint`) : undefined;
   const label = fieldLabel(config, labelText, t("optional"));
 
+  // Every field has one, so there is no flag on the config to check — a missing
+  // key would be a loud next-intl error rather than a field that quietly loses
+  // its example. Never carries meaning the label does not: the placeholder is
+  // gone the moment somebody types, and it is invisible to a screen reader.
+  const placeholder = tFields(`${config.field}.placeholder`);
+
   const options = useMemo(
     () => optionsFor(config, locale, tOptions),
     [config, locale, tOptions],
@@ -85,6 +91,7 @@ export function FieldRow({
             label={label}
             labelText={labelText}
             hint={hint}
+            placeholder={placeholder}
             value={field.value}
             error={error}
             onChange={(value) => {
@@ -125,7 +132,7 @@ export function FieldRow({
             // Never numeric-only: 03/04/1975 means two different days depending
             // on who is reading it, and this form is filled in by both.
             valueFormat="D MMM YYYY"
-            placeholder={t("datePlaceholder")}
+            placeholder={placeholder}
             autoComplete={config.autoComplete}
             // The dropdown matches the field. What spreads the grids inside it
             // is a block of CSS in globals.css — Mantine's own `fullWidth` prop
@@ -158,6 +165,7 @@ export function FieldRow({
             id={config.field}
             data={options}
             value={field.value === "" ? null : field.value}
+            placeholder={placeholder}
             searchable
             allowDeselect={false}
             nothingFoundMessage={t("nationalityNoMatch")}
@@ -213,7 +221,14 @@ export function FieldRow({
 
   if (config.kind === "textarea") {
     return (
-      <Textarea {...registered} rows={3} autosize minRows={3} maxRows={8} />
+      <Textarea
+        {...registered}
+        placeholder={placeholder}
+        rows={3}
+        autosize
+        minRows={3}
+        maxRows={8}
+      />
     );
   }
 
@@ -221,7 +236,10 @@ export function FieldRow({
     return (
       <NativeSelect
         {...registered}
-        data={[{ value: "", label: t("chooseOne") }, ...options]}
+        // A native select has no placeholder, so the empty first option is the
+        // one. Left selectable rather than disabled: religion is optional, and
+        // somebody who picked an answer by accident has to be able to undo it.
+        data={[{ value: "", label: placeholder }, ...options]}
       />
     );
   }
@@ -229,6 +247,7 @@ export function FieldRow({
   return (
     <TextInput
       {...registered}
+      placeholder={placeholder}
       type={config.kind === "email" ? "email" : "text"}
       inputMode={config.inputMode}
     />

@@ -21,8 +21,6 @@
     "ticketHint": "Reception can see this number. Say it if you need help before you finish.",
     "privacy": "A member of staff can see this form as you fill it in, so they can help if you get stuck. Nothing is shared outside the hospital.",
     "optional": "Optional",
-    "chooseOne": "Choose one",
-    "datePlaceholder": "e.g. 4 Mar 1975",
     "nationalityNoMatch": "No match — tell reception and they will add it",
     "countryCodeFor": "{field} country code",
     "countryNoMatch": "No country by that name",
@@ -39,26 +37,53 @@
   },
 
   "fields": {
-    "firstName": { "label": "First name" },
-    "middleName": { "label": "Middle name" },
-    "lastName": { "label": "Last name" },
-    "dateOfBirth": { "label": "Date of birth" },
-    "gender": { "label": "Gender" },
-    "phone": { "label": "Phone number", "hint": "For example 081 234 5678" },
-    "email": { "label": "Email" },
-    "address": { "label": "Address" },
+    "firstName": { "label": "First name", "placeholder": "e.g. Somchai" },
+    "middleName": {
+      "label": "Middle name",
+      "placeholder": "Leave blank if you have none"
+    },
+    "lastName": { "label": "Last name", "placeholder": "e.g. Prasert" },
+    "dateOfBirth": {
+      "label": "Date of birth",
+      "placeholder": "e.g. 4 Mar 1975"
+    },
+    "gender": { "label": "Gender", "placeholder": "Choose one" },
+    "phone": {
+      "label": "Phone number",
+      "hint": "For example 081 234 5678",
+      "placeholder": "081 234 5678"
+    },
+    "email": { "label": "Email", "placeholder": "e.g. somchai@email.com" },
+    "address": {
+      "label": "Address",
+      "placeholder": "House number, road, sub-district, district, province, postcode"
+    },
     "preferredLanguage": {
       "label": "Preferred language",
-      "hint": "The language you would like staff to speak with you"
+      "hint": "The language you would like staff to speak with you",
+      "placeholder": "Choose one"
     },
-    "nationality": { "label": "Nationality" },
-    "emergencyContactName": { "label": "Emergency contact name" },
-    "emergencyContactNumber": { "label": "Emergency contact number" },
+    "nationality": {
+      "label": "Nationality",
+      "placeholder": "Type a country name"
+    },
+    "emergencyContactName": {
+      "label": "Emergency contact name",
+      "placeholder": "e.g. Malee Prasert"
+    },
+    "emergencyContactNumber": {
+      "label": "Emergency contact number",
+      "placeholder": "081 234 5678"
+    },
     "emergencyContactRelationship": {
       "label": "Emergency contact relationship",
-      "hint": "For example: daughter, husband, neighbour"
+      "hint": "For example: daughter, husband, neighbour",
+      "placeholder": "e.g. daughter"
     },
-    "religion": { "label": "Religion" }
+    "religion": {
+      "label": "Religion",
+      "placeholder": "Choose one, or leave blank"
+    }
   },
 
   "options": {
